@@ -11,6 +11,7 @@ import {
   Camera,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import cmsLogo from "@/assets/cms-logo.webp";
 
 import {
   Sidebar,
@@ -60,9 +61,13 @@ export function AppSidebar() {
     <Sidebar className="border-r">
       <SidebarContent>
         <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center shadow-lg">
-              <Heart className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img 
+                src={cmsLogo} 
+                alt="CMS Foundation" 
+                className="w-10 h-10 object-contain"
+              />
             </div>
             {!isCollapsed && (
               <div>
