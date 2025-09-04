@@ -52,6 +52,30 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))'
+				},
+				impact: {
+					red: 'hsl(var(--impact-red))',
+					yellow: 'hsl(var(--impact-yellow))',
+					blue: 'hsl(var(--impact-blue))',
+					green: 'hsl(var(--impact-green))'
+				},
+				thematic: {
+					health: 'hsl(var(--health))',
+					education: 'hsl(var(--education))',
+					climate: 'hsl(var(--climate))',
+					livelihood: 'hsl(var(--livelihood))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
