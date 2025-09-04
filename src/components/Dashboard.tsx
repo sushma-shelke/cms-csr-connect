@@ -87,7 +87,7 @@ export function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">CSR Dashboard</h1>
         <p className="text-muted-foreground">
-          Monitor your CSR initiatives and track impact across all programs
+          Monitor your CSR initiatives and track impact across all programs • Dark Theme Active
         </p>
       </div>
 
