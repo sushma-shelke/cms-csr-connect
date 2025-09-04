@@ -28,29 +28,41 @@ export function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon">
+        {/* Push user controls to the far right */}
+        <div className="ml-auto flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 bg-primary rounded-full"></span>
             <span className="sr-only">Notifications</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 rounded-full">
+              <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    <User className="h-4 w-4" />
+                  <AvatarFallback className="bg-primary text-primary-foreground font-medium">
+                    CM
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">CMS Admin</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    admin@cmsfoundation.org
+                  </p>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem>Profile Settings</DropdownMenuItem>
+              <DropdownMenuItem>User Management</DropdownMenuItem>
+              <DropdownMenuItem>System Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                Log out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
