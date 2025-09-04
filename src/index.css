@@ -92,7 +92,7 @@ All colors MUST be HSL.
     --popover: 15 25% 6%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217 91% 60%;
+    --primary: 340 79% 52%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 14%;
@@ -101,7 +101,7 @@ All colors MUST be HSL.
     --muted: 220 13% 9%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 204 94% 50%;
+    --accent: 340 79% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -109,7 +109,7 @@ All colors MUST be HSL.
 
     --border: 215 25% 12%;
     --input: 215 25% 12%;
-    --ring: 217 91% 60%;
+    --ring: 340 79% 52%;
 
     /* CMS Brand Colors - Inspired by professional tech branding */
     --success: 142 71% 55%;
@@ -118,34 +118,34 @@ All colors MUST be HSL.
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     
-    --info: 204 94% 50%;
+    --info: 340 79% 60%;
     --info-foreground: 0 0% 100%;
     
     /* Impact tracking colors - CMS Theme */
     --impact-red: 0 84% 65%;
     --impact-yellow: 38 92% 60%;
-    --impact-blue: 204 94% 65%;
+    --impact-blue: 340 79% 60%;
     --impact-green: 142 71% 60%;
     
     /* Thematic colors - CMS Professional */
-    --health: 340 82% 70%;
-    --education: 217 91% 70%;
+    --health: 340 79% 60%;
+    --education: 340 79% 65%;
     --climate: 142 71% 60%;
     --livelihood: 38 92% 65%;
     
     /* Gradients - CMS Brand */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(204 94% 50%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 71% 55%) 0%, hsl(204 94% 50%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(38 92% 50%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(340 79% 52%) 0%, hsl(340 79% 60%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 55%) 0%, hsl(340 79% 60%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(340 79% 52%) 0%, hsl(38 92% 50%) 100%);
 
     --sidebar-background: 15 27% 5%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 340 79% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 13% 9%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 215 25% 12%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-ring: 340 79% 52%;
   }
 }
 
