@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,11 @@ import {
   CheckCircle2,
   AlertCircle,
   Users,
+  FileText,
+  BarChart3,
 } from "lucide-react";
+import { ProjectCreationWizard } from "@/components/project/ProjectCreationWizard";
+import { MISReportManager } from "@/components/project/MISReportManager";
 
 const projectsData = [
   {
@@ -117,6 +122,7 @@ export default function ProjectManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [themeFilter, setThemeFilter] = useState("all");
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
 
   const filteredProjects = projectsData.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -200,7 +206,10 @@ export default function ProjectManagement() {
             Monitor and track CSR project execution and impact
           </p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
+        <Button 
+          className="bg-primary hover:bg-primary/90"
+          onClick={() => setShowCreateWizard(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Create Project
         </Button>
@@ -256,6 +265,24 @@ export default function ProjectManagement() {
           </CardContent>
         </Card>
       </div>
+
+      <Tabs defaultValue="projects" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="projects">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Project Portfolio
+          </TabsTrigger>
+          <TabsTrigger value="mis-reports">
+            <FileText className="h-4 w-4 mr-2" />
+            MIS Reports
+          </TabsTrigger>
+          <TabsTrigger value="analytics">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="projects">
 
       {/* Filters and Search */}
       <Card>
@@ -433,6 +460,130 @@ export default function ProjectManagement() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="mis-reports">
+          <MISReportManager />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Thematic Wise Budget Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="border-thematic-health border-2">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-thematic-health font-bold text-lg">Health</div>
+                      <div className="text-2xl font-bold">₹{((900000 / 100000)).toFixed(1)}L</div>
+                      <div className="text-sm text-muted-foreground">2 Projects</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-thematic-education border-2">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-thematic-education font-bold text-lg">Education</div>
+                      <div className="text-2xl font-bold">₹{((750000 / 100000)).toFixed(1)}L</div>
+                      <div className="text-sm text-muted-foreground">1 Project</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-thematic-climate border-2">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-thematic-climate font-bold text-lg">Climate</div>
+                      <div className="text-2xl font-bold">₹{((300000 / 100000)).toFixed(1)}L</div>
+                      <div className="text-sm text-muted-foreground">1 Project</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-thematic-livelihood border-2">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-thematic-livelihood font-bold text-lg">Livelihood</div>
+                      <div className="text-2xl font-bold">₹{((400000 / 100000)).toFixed(1)}L</div>
+                      <div className="text-sm text-muted-foreground">1 Project</div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Performance Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-impact-green rounded-full"></div>
+                        Excellent (≥80%)
+                      </span>
+                      <span className="font-medium">2 Projects</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-impact-blue rounded-full"></div>
+                        Good (50-80%)
+                      </span>
+                      <span className="font-medium">1 Project</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-impact-yellow rounded-full"></div>
+                        Attention (30-50%)
+                      </span>
+                      <span className="font-medium">1 Project</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-impact-red rounded-full"></div>
+                        Critical (≤30%)
+                      </span>
+                      <span className="font-medium">1 Project</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Budget Utilization Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span>Total Allocated Budget</span>
+                        <span className="font-medium">₹{(totalBudget / 100000).toFixed(1)}L</span>
+                      </div>
+                      <Progress value={100} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span>Budget Utilized</span>
+                        <span className="font-medium">₹{(totalSpent / 100000).toFixed(1)}L</span>
+                      </div>
+                      <Progress value={(totalSpent / totalBudget) * 100} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span>Remaining Budget</span>
+                        <span className="font-medium">₹{((totalBudget - totalSpent) / 100000).toFixed(1)}L</span>
+                      </div>
+                      <Progress value={((totalBudget - totalSpent) / totalBudget) * 100} className="h-2" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <ProjectCreationWizard 
+        open={showCreateWizard} 
+        onOpenChange={setShowCreateWizard} 
+      />
     </div>
   );
 }

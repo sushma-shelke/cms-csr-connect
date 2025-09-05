@@ -29,8 +29,8 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "NGO Partners", url: "/ngos", icon: Building2 },
   { title: "Projects", url: "/projects", icon: FolderOpen },
+  { title: "MIS Reports", url: "/mis-reports", icon: FileText },
   { title: "Financial Tracking", url: "/finance", icon: IndianRupee },
-  { title: "Reports", url: "/reports", icon: FileText },
   { title: "Media Evidence", url: "/media", icon: Camera },
 ];
 
