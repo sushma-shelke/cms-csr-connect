@@ -188,6 +188,8 @@ export default function ProjectManagement() {
         return "text-thematic-climate";
       case "Livelihood":
         return "text-thematic-livelihood";
+      case "Government Convergence":
+        return "text-success";
       default:
         return "text-muted-foreground";
     }
@@ -315,13 +317,14 @@ export default function ProjectManagement() {
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="Theme" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Themes</SelectItem>
-                  <SelectItem value="Health">Health</SelectItem>
-                  <SelectItem value="Education">Education</SelectItem>
-                  <SelectItem value="Climate Resilience">Climate</SelectItem>
-                  <SelectItem value="Livelihood">Livelihood</SelectItem>
-                </SelectContent>
+                  <SelectContent>
+                    <SelectItem value="all">All Themes</SelectItem>
+                    <SelectItem value="Health">Health</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Climate Resilience">Climate</SelectItem>
+                    <SelectItem value="Livelihood">Livelihood</SelectItem>
+                    <SelectItem value="Government Convergence">Government Convergence</SelectItem>
+                  </SelectContent>
               </Select>
             </div>
           </div>

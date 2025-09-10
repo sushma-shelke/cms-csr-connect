@@ -27,13 +27,31 @@ interface BudgetItem {
   cmsContribution: number;
   ngoContribution: number;
   beneficiaryContribution: number;
+  governmentContribution: number;
   totalCost: number;
+  customColumns?: { [key: string]: number };
 }
 
 interface MonthlyTarget {
   month: string;
   target: number;
   description: string;
+}
+
+interface SubProject {
+  id: string;
+  name: string;
+  description: string;
+  budget: number;
+  startDate?: Date;
+  endDate?: Date;
+  orderIndex: number;
+}
+
+interface CustomBudgetColumn {
+  id: string;
+  name: string;
+  type: 'decimal' | 'integer';
 }
 
 export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWizardProps) {
@@ -45,8 +63,10 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
   const [projectData, setProjectData] = useState({
     name: "",
     description: "",
+    projectType: "thematic" as "thematic" | "integrated_village_development",
     theme: "",
     ngoPartner: "",
+    projectHead: "",
     location: "",
     beneficiaries: "",
     objectives: ""
@@ -57,7 +77,8 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
     humanResources: 0,
     adminCost: 0,
     managementCoordination: 0,
-    miscellaneous: 0
+    miscellaneous: 0,
+    governmentConvergence: 0
   });
 
   // Budget Allocation Matrix
@@ -72,9 +93,17 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
       cmsContribution: 0,
       ngoContribution: 0,
       beneficiaryContribution: 0,
-      totalCost: 0
+      governmentContribution: 0,
+      totalCost: 0,
+      customColumns: {}
     }
   ]);
+
+  // Custom Budget Columns
+  const [customBudgetColumns, setCustomBudgetColumns] = useState<CustomBudgetColumn[]>([]);
+
+  // Sub-projects (for Integrated Village Development Program)
+  const [subProjects, setSubProjects] = useState<SubProject[]>([]);
 
   // Work Plan & Timeline
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTarget[]>(
@@ -89,7 +118,8 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
     "Health",
     "Education",
     "Climate Resilience", 
-    "Livelihood"
+    "Livelihood",
+    "Government Convergence"
   ];
 
   const ngoPartners = [
@@ -97,6 +127,14 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
     "Education First NGO",
     "Green Earth Society",
     "Rural Livelihood Trust"
+  ];
+
+  const projectHeads = [
+    "Dr. Rajesh Kumar - Health Specialist",
+    "Prof. Priya Sharma - Education Expert", 
+    "Mr. Anil Verma - Climate Resilience Lead",
+    "Ms. Sunita Devi - Livelihood Coordinator",
+    "Mr. Vikash Singh - Government Liaison"
   ];
 
   const addBudgetItem = () => {
@@ -110,9 +148,45 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
       cmsContribution: 0,
       ngoContribution: 0,
       beneficiaryContribution: 0,
-      totalCost: 0
+      governmentContribution: 0,
+      totalCost: 0,
+      customColumns: {}
     };
     setBudgetItems([...budgetItems, newItem]);
+  };
+
+  const addCustomColumn = () => {
+    const newColumn: CustomBudgetColumn = {
+      id: Date.now().toString(),
+      name: "",
+      type: "decimal"
+    };
+    setCustomBudgetColumns([...customBudgetColumns, newColumn]);
+  };
+
+  const removeCustomColumn = (id: string) => {
+    setCustomBudgetColumns(customBudgetColumns.filter(col => col.id !== id));
+    // Remove custom column values from all budget items
+    setBudgetItems(budgetItems.map(item => {
+      const newCustomColumns = { ...item.customColumns };
+      delete newCustomColumns[id];
+      return { ...item, customColumns: newCustomColumns };
+    }));
+  };
+
+  const addSubProject = () => {
+    const newSubProject: SubProject = {
+      id: Date.now().toString(),
+      name: "",
+      description: "",
+      budget: 0,
+      orderIndex: subProjects.length
+    };
+    setSubProjects([...subProjects, newSubProject]);
+  };
+
+  const removeSubProject = (id: string) => {
+    setSubProjects(subProjects.filter(sub => sub.id !== id));
   };
 
   const removeBudgetItem = (id: string) => {
@@ -124,10 +198,23 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
       if (item.id === id) {
         const updated = { ...item, [field]: value };
         // Auto-calculate total cost
-        if (['unitCost', 'quantity', 'cmsContribution', 'ngoContribution', 'beneficiaryContribution'].includes(field)) {
-          updated.totalCost = updated.cmsContribution + updated.ngoContribution + updated.beneficiaryContribution;
+        if (['unitCost', 'quantity', 'cmsContribution', 'ngoContribution', 'beneficiaryContribution', 'governmentContribution'].includes(field)) {
+          const customTotal = Object.values(updated.customColumns || {}).reduce((sum, val) => sum + (val || 0), 0);
+          updated.totalCost = updated.cmsContribution + updated.ngoContribution + updated.beneficiaryContribution + updated.governmentContribution + customTotal;
         }
         return updated;
+      }
+      return item;
+    }));
+  };
+
+  const updateCustomColumnValue = (itemId: string, columnId: string, value: number) => {
+    setBudgetItems(budgetItems.map(item => {
+      if (item.id === itemId) {
+        const customColumns = { ...item.customColumns, [columnId]: value };
+        const customTotal = Object.values(customColumns).reduce((sum, val) => sum + (val || 0), 0);
+        const totalCost = item.cmsContribution + item.ngoContribution + item.beneficiaryContribution + item.governmentContribution + customTotal;
+        return { ...item, customColumns, totalCost };
       }
       return item;
     }));
@@ -142,16 +229,86 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
   };
 
   const steps = [
-    { id: 1, title: "Basic Information", icon: "📋" },
-    { id: 2, title: "Budget Categories", icon: "💰" },
-    { id: 3, title: "Budget Allocation", icon: "📊" },
-    { id: 4, title: "Work Plan & Timeline", icon: "📅" },
-    { id: 5, title: "Review & Submit", icon: "✅" }
+    { id: 1, title: "Project Type & Head", icon: "🎯" },
+    { id: 2, title: "Basic Information", icon: "📋" },
+    { id: 3, title: "Budget Categories", icon: "💰" },
+    { id: 4, title: "Budget Allocation", icon: "📊" },
+    { id: 5, title: "Work Plan & Timeline", icon: "📅" },
+    { id: 6, title: "Review & Submit", icon: "✅" }
   ];
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Project Type & Project Head Selection</h3>
+              <p className="text-muted-foreground">Choose the project type and assign a project head</p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">Project Type *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className={`cursor-pointer transition-all ${projectData.projectType === 'thematic' ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'}`} 
+                        onClick={() => setProjectData({...projectData, projectType: 'thematic'})}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-2xl">🎯</div>
+                        <div>
+                          <h4 className="font-semibold">Thematic Project</h4>
+                          <p className="text-sm text-muted-foreground">Single focus area project</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className={`cursor-pointer transition-all ${projectData.projectType === 'integrated_village_development' ? 'ring-2 ring-primary bg-primary/5' : 'hover:bg-muted/50'}`}
+                        onClick={() => setProjectData({...projectData, projectType: 'integrated_village_development'})}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-2xl">🏘️</div>
+                        <div>
+                          <h4 className="font-semibold">Integrated Village Development</h4>
+                          <p className="text-sm text-muted-foreground">Multi-component village program</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="projectHead">Select Project Head *</Label>
+                <Select value={projectData.projectHead} onValueChange={(value) => setProjectData({...projectData, projectHead: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose project head" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projectHeads.map(head => (
+                      <SelectItem key={head} value={head}>{head}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {projectData.projectType === 'integrated_village_development' && (
+                <Card className="bg-info/5 border-info">
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold text-info mb-2">Integrated Village Development Program</h4>
+                    <p className="text-sm text-muted-foreground">
+                      This project type allows multiple sub-projects with dynamic attributes. 
+                      You can add multiple components like health, education, livelihood, etc. within a single village program.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        );
+
+      case 2:
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -204,6 +361,77 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
                 />
               </div>
             </div>
+
+            {/* Sub-projects section for Integrated Village Development */}
+            {projectData.projectType === 'integrated_village_development' && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-base font-semibold">Sub-Projects</Label>
+                  <Button type="button" onClick={addSubProject} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Sub-Project
+                  </Button>
+                </div>
+                {subProjects.map((subProject, index) => (
+                  <Card key={subProject.id}>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Sub-Project Name</Label>
+                          <Input
+                            value={subProject.name}
+                            onChange={(e) => {
+                              const updated = subProjects.map(sp => 
+                                sp.id === subProject.id ? {...sp, name: e.target.value} : sp
+                              );
+                              setSubProjects(updated);
+                            }}
+                            placeholder="Enter sub-project name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Budget (₹)</Label>
+                          <Input
+                            type="number"
+                            value={subProject.budget}
+                            onChange={(e) => {
+                              const updated = subProjects.map(sp => 
+                                sp.id === subProject.id ? {...sp, budget: Number(e.target.value)} : sp
+                              );
+                              setSubProjects(updated);
+                            }}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button 
+                            type="button"
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => removeSubProject(subProject.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <Label>Description</Label>
+                        <Textarea
+                          value={subProject.description}
+                          onChange={(e) => {
+                            const updated = subProjects.map(sp => 
+                              sp.id === subProject.id ? {...sp, description: e.target.value} : sp
+                            );
+                            setSubProjects(updated);
+                          }}
+                          placeholder="Sub-project description"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="location">Location *</Label>
@@ -270,7 +498,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
           </div>
         );
 
-      case 2:
+      case 3:
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -362,6 +590,27 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-success">Government Convergence Cost</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="governmentConvergence">Amount (₹)</Label>
+                    <Input
+                      id="governmentConvergence"
+                      type="number"
+                      value={budgetCategories.governmentConvergence}
+                      onChange={(e) => setBudgetCategories({
+                        ...budgetCategories,
+                        governmentConvergence: Number(e.target.value)
+                      })}
+                      placeholder="0"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             <Card className="bg-muted/50">
@@ -375,7 +624,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -383,23 +632,82 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
                 <h3 className="text-lg font-semibold">Budget Allocation Matrix</h3>
                 <p className="text-muted-foreground">Detail breakdown with contribution tracking</p>
               </div>
-              <Button onClick={addBudgetItem} size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={addCustomColumn} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Column
+                </Button>
+                <Button onClick={addBudgetItem} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
             </div>
+
+            {/* Custom Columns Management */}
+            {customBudgetColumns.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Custom Budget Columns</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {customBudgetColumns.map((column) => (
+                      <div key={column.id} className="flex items-center gap-4">
+                        <Input
+                          value={column.name}
+                          onChange={(e) => {
+                            const updated = customBudgetColumns.map(col =>
+                              col.id === column.id ? {...col, name: e.target.value} : col
+                            );
+                            setCustomBudgetColumns(updated);
+                          }}
+                          placeholder="Column name"
+                          className="flex-1"
+                        />
+                        <Select
+                          value={column.type}
+                          onValueChange={(value: 'decimal' | 'integer') => {
+                            const updated = customBudgetColumns.map(col =>
+                              col.id === column.id ? {...col, type: value} : col
+                            );
+                            setCustomBudgetColumns(updated);
+                          }}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="decimal">Decimal</SelectItem>
+                            <SelectItem value="integer">Integer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => removeCustomColumn(column.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="space-y-4">
               {budgetItems.map((item, index) => (
                 <Card key={item.id}>
                   <CardContent className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
                       <div className="space-y-2">
-                        <Label>Serial No.</Label>
+                        <Label>S.No</Label>
                         <Input
                           type="number"
                           value={item.serialNo}
                           onChange={(e) => updateBudgetItem(item.id, 'serialNo', Number(e.target.value))}
+                          className="text-sm"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
@@ -408,6 +716,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
                           value={item.description}
                           onChange={(e) => updateBudgetItem(item.id, 'description', e.target.value)}
                           placeholder="Item description"
+                          className="text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -416,6 +725,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
                           value={item.unit}
                           onChange={(e) => updateBudgetItem(item.id, 'unit', e.target.value)}
                           placeholder="Unit"
+                          className="text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -424,22 +734,52 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
                           type="number"
                           value={item.unitCost}
                           onChange={(e) => updateBudgetItem(item.id, 'unitCost', Number(e.target.value))}
+                          className="text-sm"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Quantity</Label>
+                        <Label>Qty</Label>
                         <Input
                           type="number"
                           value={item.quantity}
                           onChange={(e) => updateBudgetItem(item.id, 'quantity', Number(e.target.value))}
+                          className="text-sm"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>CMS Contribution</Label>
+                        <Label>CMS</Label>
                         <Input
                           type="number"
                           value={item.cmsContribution}
                           onChange={(e) => updateBudgetItem(item.id, 'cmsContribution', Number(e.target.value))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>NGO</Label>
+                        <Input
+                          type="number"
+                          value={item.ngoContribution}
+                          onChange={(e) => updateBudgetItem(item.id, 'ngoContribution', Number(e.target.value))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Beneficiary</Label>
+                        <Input
+                          type="number"
+                          value={item.beneficiaryContribution}
+                          onChange={(e) => updateBudgetItem(item.id, 'beneficiaryContribution', Number(e.target.value))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Government</Label>
+                        <Input
+                          type="number"
+                          value={item.governmentContribution}
+                          onChange={(e) => updateBudgetItem(item.id, 'governmentContribution', Number(e.target.value))}
+                          className="text-sm"
                         />
                       </div>
                       <div className="flex items-end">

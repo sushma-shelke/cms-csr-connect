@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import NGOManagement from "./pages/NGOManagement";
 import ProjectManagement from "./pages/ProjectManagement";
+import FinancialManagement from "./pages/FinancialManagement";
 import MISReports from "./pages/MISReports";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/ngos" element={<NGOManagement />} />
                 <Route path="/projects" element={<ProjectManagement />} />
+                <Route path="/financial" element={<FinancialManagement />} />
                 <Route path="/mis-reports" element={<MISReports />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
