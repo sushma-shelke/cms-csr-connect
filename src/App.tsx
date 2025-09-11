@@ -12,6 +12,7 @@ import ProjectManagement from "./pages/ProjectManagement";
 import FinancialManagement from "./pages/FinancialManagement";
 import MISReports from "./pages/MISReports";
 import NGOQuickUpdates from "./pages/NGOQuickUpdates";
+import MediaEvidence from "./pages/MediaEvidence";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
                 <Route path="/projects" element={<ProjectManagement />} />
                 <Route path="/financial" element={<FinancialManagement />} />
                 <Route path="/mis-reports" element={<MISReports />} />
+                <Route path="/media" element={<MediaEvidence />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
