@@ -11,6 +11,7 @@ import NGOManagement from "./pages/NGOManagement";
 import ProjectManagement from "./pages/ProjectManagement";
 import FinancialManagement from "./pages/FinancialManagement";
 import MISReports from "./pages/MISReports";
+import NGOQuickUpdates from "./pages/NGOQuickUpdates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/ngos" element={<NGOManagement />} />
+                <Route path="/ngo-updates" element={<NGOQuickUpdates />} />
                 <Route path="/projects" element={<ProjectManagement />} />
                 <Route path="/financial" element={<FinancialManagement />} />
                 <Route path="/mis-reports" element={<MISReports />} />

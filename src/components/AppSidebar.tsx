@@ -9,6 +9,7 @@ import {
   Settings,
   Users,
   Camera,
+  Clock,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import cmsLogo from "@/assets/cms-logo.webp";
@@ -28,6 +29,7 @@ import {
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "NGO Partners", url: "/ngos", icon: Building2 },
+  { title: "Quick Updates", url: "/ngo-updates", icon: Clock },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "MIS Reports", url: "/mis-reports", icon: FileText },
   { title: "Financial Tracking", url: "/finance", icon: IndianRupee },
