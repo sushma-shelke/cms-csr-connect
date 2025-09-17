@@ -21,6 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, Search, MapPin, Star, Users, FileText } from "lucide-react";
+import { useLocation, Link } from "react-router-dom";
 
 const ngoData = [
   {
@@ -83,6 +84,7 @@ export default function NGOManagement() {
     ngo.theme.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
@@ -121,8 +123,10 @@ export default function NGOManagement() {
           </p>
         </div>
         <Button className="bg-primary hover:bg-primary/90">
+        <Link to="/add-ngo" >
           <Plus className="h-4 w-4 mr-2" />
           Add New NGO
+        </Link>
         </Button>
       </div>
 
