@@ -31,7 +31,7 @@ const App = () => (
                 <Route path="/ngos" element={<NGOManagement />} />
                 <Route path="/ngo-updates" element={<NGOQuickUpdates />} />
                 <Route path="/projects" element={<ProjectManagement />} />
-                <Route path="/financial" element={<FinancialManagement />} />
+                <Route path="/finance" element={<FinancialManagement />} />
                 <Route path="/mis-reports" element={<MISReports />} />
                 <Route path="/media" element={<MediaEvidence />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

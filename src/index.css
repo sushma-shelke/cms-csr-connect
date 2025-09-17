@@ -163,3 +163,13 @@ All colors MUST be HSL.
     color-scheme: dark;
   }
 }
+
+/* global.css or tailwind.css */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}
