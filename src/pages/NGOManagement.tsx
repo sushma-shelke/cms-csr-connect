@@ -122,12 +122,12 @@ export default function NGOManagement() {
             Manage your CSR implementation partners and track their performance
           </p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90">
         <Link to="/add-ngo" >
+        <Button className="bg-primary">
           <Plus className="h-4 w-4 mr-2" />
-          Add New NGO
-        </Link>
+          Add NGO
         </Button>
+        </Link>
       </div>
 
       {/* Summary Cards */}
