@@ -14,6 +14,7 @@ import MISReports from "./pages/MISReports";
 import NGOQuickUpdates from "./pages/NGOQuickUpdates";
 import MediaEvidence from "./pages/MediaEvidence";
 import NotFound from "./pages/NotFound";
+import AddNGO from "./pages/AddNGO";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/ngos" element={<NGOManagement />} />
+                <Route path="/add-ngo" element={<AddNGO/>} />
                 <Route path="/ngo-updates" element={<NGOQuickUpdates />} />
                 <Route path="/projects" element={<ProjectManagement />} />
                 <Route path="/financial" element={<FinancialManagement />} />
