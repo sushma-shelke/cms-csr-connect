@@ -14,6 +14,10 @@ import MISReports from "./pages/MISReports";
 import NGOQuickUpdates from "./pages/NGOQuickUpdates";
 import MediaEvidence from "./pages/MediaEvidence";
 import NotFound from "./pages/NotFound";
+import HealthThematic from "./pages/HealthThematic";
+import EducationThematic from "./pages/EducationThematic";
+import ClimateResilienceThematic from "./pages/ClimateResilienceThematic";
+import LivelihoodThematic from "./pages/LivelihoodThematic";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,10 @@ const App = () => (
                 <Route path="/finance" element={<FinancialManagement />} />
                 <Route path="/mis-reports" element={<MISReports />} />
                 <Route path="/media" element={<MediaEvidence />} />
+                <Route path="/themes/health" element={<HealthThematic />} />
+                <Route path="/themes/education" element={<EducationThematic />} />
+                <Route path="/themes/climate" element={<ClimateResilienceThematic />} />
+                <Route path="/themes/livelihood" element={<LivelihoodThematic />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
