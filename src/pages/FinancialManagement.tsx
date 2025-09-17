@@ -83,42 +83,93 @@ export default function FinancialManagement() {
           </p>
         </div>
         {isAdmin && (
-          <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Manage Budget
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Overall Budget</DialogTitle>
-                <DialogDescription>
-                  Modify the total budget allocation for all projects and programs.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Total Budget Amount (₹)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    value={newBudgetAmount}
-                    onChange={(e) => setNewBudgetAmount(e.target.value)}
-                    placeholder="Enter budget amount"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowBudgetDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleUpdateBudget}>
-                    Update Budget
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Dialog>
+  <DialogTrigger asChild>
+    <Button className="bg-primary">
+      <Plus className="h-4 w-4 mr-2" /> Add Financial Record
+    </Button>
+  </DialogTrigger>
+<DialogContent className="max-w-3xl w-full max-h-[80vh] overflow-y-auto hide-scrollbar">
+    <DialogHeader>
+      <DialogTitle>New Financial Entry</DialogTitle>
+      <DialogDescription>Record allocations and expenditures.</DialogDescription>
+    </DialogHeader>
+
+    <form className="space-y-4">
+      <div>
+        <Label htmlFor="totalBudget">Total Budget (₹)</Label>
+        <Input id="totalBudget" type="number" placeholder="Enter total budget" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="allocated">Allocated Budget (₹)</Label>
+          <Input id="allocated" type="number" placeholder="Enter allocated" />
+        </div>
+        <div>
+          <Label htmlFor="spent">Spent Budget (₹)</Label>
+          <Input id="spent" type="number" placeholder="Enter spent" />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="theme">Thematic Area</Label>
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Choose theme" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="health">Health</SelectItem>
+            <SelectItem value="education">Education</SelectItem>
+            <SelectItem value="climate">Climate Resilience</SelectItem>
+            <SelectItem value="livelihood">Livelihood</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="themeAllocated">Theme Allocated (₹)</Label>
+          <Input id="themeAllocated" type="number" />
+        </div>
+        <div>
+          <Label htmlFor="themeSpent">Theme Spent (₹)</Label>
+          <Input id="themeSpent" type="number" />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="projects">No. of Projects</Label>
+        <Input id="projects" type="number" />
+      </div>
+
+      <div>
+        <Label htmlFor="reports">Reports Pending</Label>
+        <Input id="reports" type="number" />
+      </div>
+
+      <div>
+        <Label htmlFor="period">Period</Label>
+        <Select>
+          <SelectTrigger>
+            <SelectValue placeholder="Select period" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="monthly">Monthly</SelectItem>
+            <SelectItem value="quarterly">Quarterly</SelectItem>
+            <SelectItem value="yearly">Yearly</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="reset" variant="outline">Cancel</Button>
+        <Button type="submit">Save</Button>
+      </div>
+    </form>
+  </DialogContent>
+</Dialog>
+
         )}
       </div>
 
