@@ -18,6 +18,8 @@ import HealthThematic from "./pages/HealthThematic";
 import EducationThematic from "./pages/EducationThematic";
 import ClimateResilienceThematic from "./pages/ClimateResilienceThematic";
 import LivelihoodThematic from "./pages/LivelihoodThematic";
+import AddNGO from "./pages/AddNGO";
+
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/ngos" element={<NGOManagement />} />
+                <Route path="/add-ngo" element={<AddNGO/>} />
                 <Route path="/ngo-updates" element={<NGOQuickUpdates />} />
                 <Route path="/projects" element={<ProjectManagement />} />
                 <Route path="/finance" element={<FinancialManagement />} />
