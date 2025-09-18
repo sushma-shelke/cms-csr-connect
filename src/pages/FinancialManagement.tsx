@@ -96,7 +96,7 @@ export default function FinancialManagement() {
     </DialogHeader>
 
     <form className="space-y-4">
-      <div>
+      {/* <div>
         <Label htmlFor="totalBudget">Total Budget (₹)</Label>
         <Input id="totalBudget" type="number" placeholder="Enter total budget" />
       </div>
@@ -110,7 +110,7 @@ export default function FinancialManagement() {
           <Label htmlFor="spent">Spent Budget (₹)</Label>
           <Input id="spent" type="number" placeholder="Enter spent" />
         </div>
-      </div>
+      </div> */}
 
       <div>
         <Label htmlFor="theme">Thematic Area</Label>
@@ -129,16 +129,16 @@ export default function FinancialManagement() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="themeAllocated">Theme Allocated (₹)</Label>
+          <Label htmlFor="themeAllocated">Fund Allocated (₹)</Label>
           <Input id="themeAllocated" type="number" />
         </div>
-        <div>
+        {/* <div>
           <Label htmlFor="themeSpent">Theme Spent (₹)</Label>
           <Input id="themeSpent" type="number" />
-        </div>
+        </div> */}
       </div>
 
-      <div>
+      {/* <div>
         <Label htmlFor="projects">No. of Projects</Label>
         <Input id="projects" type="number" />
       </div>
@@ -146,7 +146,7 @@ export default function FinancialManagement() {
       <div>
         <Label htmlFor="reports">Reports Pending</Label>
         <Input id="reports" type="number" />
-      </div>
+      </div> */}
 
       <div>
         <Label htmlFor="period">Period</Label>
@@ -155,9 +155,11 @@ export default function FinancialManagement() {
             <SelectValue placeholder="Select period" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="monthly">Monthly</SelectItem>
-            <SelectItem value="quarterly">Quarterly</SelectItem>
-            <SelectItem value="yearly">Yearly</SelectItem>
+            <SelectItem value="monthly">1 Year</SelectItem>
+            <SelectItem value="quarterly">2 Years</SelectItem>
+            <SelectItem value="quarterly">3 Years</SelectItem>
+            <SelectItem value="quarterly">4 Years</SelectItem>
+            <SelectItem value="quarterly">5 Years</SelectItem>
           </SelectContent>
         </Select>
       </div>
