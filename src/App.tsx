@@ -19,6 +19,7 @@ import EducationThematic from "./pages/EducationThematic";
 import ClimateResilienceThematic from "./pages/ClimateResilienceThematic";
 import LivelihoodThematic from "./pages/LivelihoodThematic";
 import AddNGO from "./pages/AddNGO";
+import bgVideo from "./assets/bg.mp4";
 
 
 const queryClient = new QueryClient();
@@ -30,6 +31,20 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
+
+               {/* Global Video Background */}
+      <video
+        className="fixed top-0 left-0 w-full h-full object-cover z-[-1]"
+        src={bgVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+
+      {/* Overlay for readability */}
+      <div className="fixed inset-0 bg-black/30 z-[-1]"></div>
+
           <ProtectedRoute>
             <Layout>
               <Routes>
