@@ -398,13 +398,13 @@ export function MISReportManager() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="currentPerformance">Current Performance *</Label>
+                    <Label htmlFor="currentPerformance">Achieved Target *</Label>
                     <Input
                       id="currentPerformance" 
                       type="number"
                       value={reportFormData.currentPerformance}
                       onChange={(e) => setReportFormData({...reportFormData, currentPerformance: e.target.value})}
-                      placeholder="Enter current performance"
+                      placeholder="Enter Achieved Target"
                     />
                   </div>
                 </div>
