@@ -6,12 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Building2, Lock, Mail } from 'lucide-react';
+import { Loader2, Building2, Lock, Mail, Smartphone, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
+  const [loginMethod, setLoginMethod] = useState<'email' | 'otp'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
   const { toast } = useToast();
@@ -20,23 +23,34 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
+    if (loginMethod === 'email') {
+      if (!email || !password) {
+        setError('Please fill in all fields');
+        return;
+      }
 
-    const success = await login(email, password);
-    if (!success) {
-      setError('Invalid email or password');
-      toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      const success = await login(email, password);
+      if (!success) {
+        setError('Invalid email or password');
+        toast({
+          title: "Login Failed",
+          description: "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome to CMS Foundation MIS",
+          description: "You have successfully logged in.",
+        });
+      }
     } else {
+      if (!mobile || !otp) {
+        setError('Please enter mobile number and OTP');
+        return;
+      }
       toast({
-        title: "Welcome to CMS Foundation MIS",
-        description: "You have successfully logged in.",
+        title: "OTP Login (UI Only)",
+        description: `Logged in with mobile: ${mobile}`,
       });
     }
   };
@@ -51,25 +65,26 @@ export default function Login() {
   const fillDemoCredentials = (email: string, password: string) => {
     setEmail(email);
     setPassword(password);
+    setLoginMethod('email'); // auto-switch to email login
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-primary/10 p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Logo and Title */}
-        <div className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-primary-foreground" />
-            </div>
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">CMS Foundation</h1>
-            <p className="text-lg text-muted-foreground">CSR MIS Platform</p>
-          </div>
-        </div>
+       {/* Logo and Title */}
+<div className="text-center space-y-4">
+  <div className="flex justify-center">
+    <img
+      src="/src/assets/cms-logo.webp"
+      alt="CMS Foundation Logo"
+      className="w-28 h-auto mx-auto"
+    />
+  </div>
+  <div>
+ </div>
+</div>
 
-        {/* Login Form */}
+        {/* Login Card */}
         <Card className="shadow-xl border-border/50">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
@@ -77,39 +92,98 @@ export default function Login() {
               Sign in to access your CSR management dashboard
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+
+          <CardContent className="space-y-6">
+            {/* Radio Switch */}
+            <div className="flex justify-center space-x-6">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="email"
+                  checked={loginMethod === 'email'}
+                  onChange={() => setLoginMethod('email')}
+                />
+                <span>Email & Password</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="otp"
+                  checked={loginMethod === 'otp'}
+                  onChange={() => setLoginMethod('otp')}
+                />
+                <span>Mobile & OTP</span>
+              </label>
+            </div>
+
+            {/* Single Form (switches fields based on method) */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-              
+              {loginMethod === 'email' ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="mobile">Mobile Number</Label>
+                    <div className="relative">
+                      <Smartphone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="mobile"
+                        type="tel"
+                        placeholder="Enter mobile number"
+                        value={mobile}
+                        onChange={(e) => setMobile(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="otp">OTP</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="otp"
+                        type="text"
+                        placeholder="Enter OTP"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -122,12 +196,15 @@ export default function Login() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in...
                   </>
-                ) : (
+                ) : loginMethod === 'email' ? (
                   'Sign In'
+                ) : (
+                  'Login with OTP'
                 )}
               </Button>
             </form>
           </CardContent>
+
           <CardFooter>
             <div className="w-full space-y-3">
               <div className="text-center">
