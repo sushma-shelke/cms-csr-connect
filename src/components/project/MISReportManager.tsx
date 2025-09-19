@@ -91,7 +91,7 @@ const mockReports: MISReport[] = [
 
 export function MISReportManager() {
   const [selectedProject, setSelectedProject] = useState("");
-  const [isSubmissionPeriodOpen, setIsSubmissionPeriodOpen] = useState(true); // Simulating 21st-25th period
+  // const [isSubmissionPeriodOpen, setIsSubmissionPeriodOpen] = useState(true); // Simulating 21st-25th period
   const [reportFormData, setReportFormData] = useState({
     targetAllocated: "",
     currentPerformance: "",
@@ -99,6 +99,11 @@ export function MISReportManager() {
     mitigationPlan: "",
     attachments: [] as File[]
   });
+
+   // 🔹 Auto-calculate submission period
+  const today = new Date();
+  const day = today.getDate();
+  const isSubmissionPeriodOpen = day >= 21 && day <= 25;
 
   const getPerformanceColor = (percentage: number) => {
     if (percentage >= 80) return "text-impact-green";

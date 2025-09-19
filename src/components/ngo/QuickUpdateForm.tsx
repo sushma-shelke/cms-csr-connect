@@ -194,22 +194,41 @@ export function QuickUpdateForm() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="mediaCount">Media Files Count</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="mediaCount"
-                type="number"
-                min="0"
-                value={formData.mediaCount}
-                onChange={(e) => handleInputChange("mediaCount", parseInt(e.target.value) || 0)}
-                className="w-24"
-              />
-              <span className="text-sm text-muted-foreground">
-                Number of photos/videos being uploaded separately
-              </span>
-            </div>
-          </div>
+        <div className="space-y-2">
+  <Label htmlFor="mediaCount">Media Files Count</Label>
+  <div className="flex items-center gap-3">
+    <Input
+      id="mediaCount"
+      type="number"
+      min="0"
+      value={formData.mediaCount}
+      onChange={(e) => handleInputChange("mediaCount", parseInt(e.target.value) || 0)}
+      className="w-24"
+    />
+    <span className="text-sm text-muted-foreground">
+      Number of photos/videos being uploaded separately
+    </span>
+  </div>
+
+  {/* Conditionally render file upload input */}
+  {formData.mediaCount > 0 && (
+    <div className="mt-2">
+      <Label htmlFor="mediaFiles">Upload Files</Label>
+      <Input
+        id="mediaFiles"
+        type="file"
+        multiple
+        accept="image/*,video/*"
+        onChange={(e) => {
+          const files = e.target.files ? Array.from(e.target.files) : [];
+          console.log("Uploaded files:", files);
+          // later you can store in state if needed
+        }}
+      />
+    </div>
+  )}
+</div>
+
 
           <div className="flex gap-3 pt-4">
             <Button type="submit" disabled={isSubmitting} className="flex-1">
