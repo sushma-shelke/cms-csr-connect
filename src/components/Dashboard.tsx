@@ -32,9 +32,9 @@ const budgetData = [
 ];
 
 const targetData = [
-  { name: "Target Achieved", value: 75, color: "hsl(var(--impact-green))" },
-  { name: "In Progress", value: 20, color: "hsl(var(--impact-blue))" },
-  { name: "At Risk", value: 5, color: "hsl(var(--impact-red))" },
+  { name: "Target Achieved", value: 75, color: "#80D763" },
+  { name: "In Progress", value: 20, color: "#FFB303" },
+  { name: "At Risk", value: 5, color: "#FF668CFF" },
 ];
 
 const recentProjects = [
@@ -93,52 +93,52 @@ export function Dashboard() {
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card style={{ borderLeft: '5px solid #6F49F8' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Budget</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{color:'#6F49F8'}}>Total Budget</CardTitle>
+            <IndianRupee className="h-4 w-4 text-muted-foreground" color="#6F49F8" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹90L</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold" style={{color:'#6F49F8'}}>₹90L</div>
+            <p className="text-xs text-muted-foreground" >
               +20.1% from last year
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft: '5px solid #8ECE33FF' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{color:'#8ECE33FF'}}>Active Projects</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" color="#8ECE33FF"/>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold" style={{color:'#8ECE33FF'}}>24</div>
+            <p className="text-xs text-muted-foreground" >
               +3 new this month
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft: '5px solid #FFB74BFF' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">NGO Partners</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{color:'#FFB74BFF'}}>NGO Partners</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" color="#FFB74BFF" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold" style={{color:'#FFB74BFF'}}>12</div>
             <p className="text-xs text-muted-foreground">
               +2 onboarded this quarter
             </p>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft: '5px solid #FF74DAFF' }}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reports Pending</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium" style={{color:'#FF74DAFF'}}>Reports Pending</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" color="#FF74DAFF" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7</div>
+            <div className="text-2xl font-bold" style={{color:'#FF74DAFF'}}>7</div>
             <p className="text-xs text-muted-foreground">
               Due by month end
             </p>

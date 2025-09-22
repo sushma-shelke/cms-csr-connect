@@ -132,7 +132,7 @@ export default function NGOManagement() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card style={{ borderLeft:'5px solid #6F49F8' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -144,7 +144,7 @@ export default function NGOManagement() {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft:'5px solid #8ECE33FF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -153,12 +153,12 @@ export default function NGOManagement() {
                   {ngoData.reduce((sum, ngo) => sum + ngo.activeProjects, 0)}
                 </p>
               </div>
-              <FileText className="h-8 w-8 text-success" />
+              <FileText className="h-8 w-8 " color="#8ECE33FF" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FFB800' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -167,12 +167,12 @@ export default function NGOManagement() {
                   {(ngoData.reduce((sum, ngo) => sum + ngo.rating, 0) / ngoData.length).toFixed(1)}
                 </p>
               </div>
-              <Star className="h-8 w-8 text-warning" />
+              <Star className="h-8 w-8 " color="#FFB800" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FF74DAFF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -181,7 +181,7 @@ export default function NGOManagement() {
                   {ngoData.filter(ngo => ngo.status === "Under Review").length}
                 </p>
               </div>
-              <MapPin className="h-8 w-8 text-info" />
+              <MapPin className="h-8 w-8 " color="#FF74DAFF" />
             </div>
           </CardContent>
         </Card>

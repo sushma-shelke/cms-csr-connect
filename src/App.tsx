@@ -33,14 +33,14 @@ const App = () => (
         <BrowserRouter>
 
                {/* Global Video Background */}
-      <video
+      {/* <video
         className="fixed top-0 left-0 w-full h-full object-cover z-[-1]"
         src={bgVideo}
         autoPlay
         loop
         muted
         playsInline
-      />
+      /> */}
 
       {/* Overlay for readability */}
       <div className="fixed inset-0 bg-black/30 z-[-1]"></div>

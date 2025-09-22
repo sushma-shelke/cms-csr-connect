@@ -1232,7 +1232,7 @@ export default function ProjectManagement() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card style={{ borderLeft:'5px solid #6F49F8' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1246,7 +1246,7 @@ export default function ProjectManagement() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #8ECE33FF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1257,12 +1257,12 @@ export default function ProjectManagement() {
                   ₹{(totalBudget / 100000).toFixed(1)}L
                 </p>
               </div>
-              <IndianRupee className="h-8 w-8 text-success" />
+              <IndianRupee className="h-8 w-8 text-success" color="#8ECE33FF" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FFB800' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1276,12 +1276,12 @@ export default function ProjectManagement() {
                   %
                 </p>
               </div>
-              <CheckCircle2 className="h-8 w-8 text-warning" />
+              <CheckCircle2 className="h-8 w-8 " color="#FFB74BFF" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FF74DAFF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -1292,7 +1292,7 @@ export default function ProjectManagement() {
                   {totalBeneficiaries.toLocaleString()}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-info" />
+              <Users className="h-8 w-8 " color="#FF74DAFF" />
             </div>
           </CardContent>
         </Card>

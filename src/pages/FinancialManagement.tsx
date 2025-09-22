@@ -177,50 +177,50 @@ export default function FinancialManagement() {
 
       {/* Financial Overview Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card style={{ borderLeft: '4px solid #6F49F8' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Budget</p>
                 <p className="text-2xl font-bold">₹{(overallBudget / 10000000).toFixed(1)}Cr</p>
               </div>
-              <Wallet className="h-8 w-8 text-primary" />
+              <Wallet className="h-8 w-8 " color="#6F49F8" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft: '4px solid #8ECE33FF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Allocated Budget</p>
                 <p className="text-2xl font-bold">₹{(mockFinancialData.allocatedBudget / 10000000).toFixed(1)}Cr</p>
               </div>
-              <Target className="h-8 w-8 text-success" />
+              <Target className="h-8 w-8 " color="#8ECE33FF" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft: '4px solid #FFB74BFF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Spent Budget</p>
                 <p className="text-2xl font-bold">₹{(mockFinancialData.spentBudget / 10000000).toFixed(1)}Cr</p>
               </div>
-              <TrendingDown className="h-8 w-8 text-warning" />
+              <TrendingDown className="h-8 w-8 " color="#FFB74BFF" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card style={{ borderLeft: '4px solid #FF74DAFF' }}>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Budget Utilization</p>
                 <p className="text-2xl font-bold">{budgetUtilization.toFixed(1)}%</p>
               </div>
-              <Calculator className="h-8 w-8 text-info" />
+              <Calculator className="h-8 w-8 " color="#FF74DAFF" />
             </div>
           </CardContent>
         </Card>

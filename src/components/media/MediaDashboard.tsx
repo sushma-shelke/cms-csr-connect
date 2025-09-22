@@ -115,7 +115,7 @@ export function MediaDashboard() {
 
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card style={{ borderLeft:'5px solid #6F49F8' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -127,39 +127,39 @@ export function MediaDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #8ECE33FF' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Storage Used</p>
                 <p className="text-2xl font-bold">{stats.totalSize} GB</p>
               </div>
-              <HardDrive className="h-8 w-8 text-info" />
+              <HardDrive className="h-8 w-8 " color="#8ECE33FF" />
             </div>
-            <Progress value={stats.storageUsed} className="h-2 mt-2" />
+            {/* <Progress value={stats.storageUsed} className="h-2 mt-2" /> */}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FFB800' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Monthly Uploads</p>
                 <p className="text-2xl font-bold">{stats.monthlyUploads}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-success" />
+              <TrendingUp className="h-8 w-8" color="#FFB800" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FF74DAFF' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Geo-tagged</p>
                 <p className="text-2xl font-bold">{stats.geoTaggedCount}</p>
               </div>
-              <MapPin className="h-8 w-8 text-warning" />
+              <MapPin className="h-8 w-8 " color="#FF74DAFF" />
             </div>
           </CardContent>
         </Card>
