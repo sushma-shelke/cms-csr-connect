@@ -12,7 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import cmsLogo from "@/assets/cms-logo.webp";
+import cmsLogo from "@/assets/cms-logo-1.png";
 
 import {
   Sidebar,

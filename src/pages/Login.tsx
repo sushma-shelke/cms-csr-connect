@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Building2, Lock, Mail, Smartphone, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CMSLogo from '@/assets/cms-logo-1.png';
 
 export default function Login() {
   const [loginMethod, setLoginMethod] = useState<'email' | 'otp'>('email');
@@ -69,13 +70,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/20 to-primary/10 p-4">
+    <div className="min-h-screen flex items-center justify-center " style={{background:'#ffffff !important'}}>
       <div className="w-full max-w-md space-y-6">
        {/* Logo and Title */}
 <div className="text-center space-y-4">
   <div className="flex justify-center">
     <img
-      src="/src/assets/cms-logo.webp"
+      src={CMSLogo}
       alt="CMS Foundation Logo"
       className="w-28 h-auto mx-auto"
     />

@@ -2,68 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Modern Dashboard Design System - Light Theme inspired by reference image
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
+    /* Light theme backgrounds - clean and modern */
     --background: 0 0% 98%;
-    --foreground: 210 12% 16%;
+    --foreground: 220 13% 18%;
 
+    /* Card system with subtle shadows */
     --card: 0 0% 100%;
-    --card-foreground: 210 12% 16%;
+    --card-foreground: 220 13% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 12% 16%;
+    --popover-foreground: 220 13% 18%;
 
-    --primary: 188 94% 25%;
-    --primary-foreground: 0 0% 98%;
+    /* Primary colors - vibrant purple/blue from reference */
+    --primary: 253 93% 63%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 253 93% 58%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 210 12% 16%;
+    /* Secondary - light purple/blue */
+    --secondary: 250 100% 97%;
+    --secondary-foreground: 253 93% 63%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    /* Muted backgrounds and text */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 28 85% 55%;
-    --accent-foreground: 0 0% 98%;
+    /* Accent colors from the reference dashboard */
+    --accent: 250 100% 97%;
+    --accent-foreground: 253 93% 63%;
 
+    /* Color palette for charts and metrics */
+    --chart-primary: 253 93% 63%;    /* Purple */
+    --chart-secondary: 33 100% 60%;  /* Orange */
+    --chart-accent-1: 315 100% 70%;  /* Pink */
+    --chart-accent-2: 175 100% 45%;  /* Teal */
+    --chart-accent-3: 142 72% 52%;   /* Green */
+    --chart-accent-4: 262 77% 52%;   /* Deep purple */
+
+    /* Status colors */
+    --success: 142 72% 52%;
+    --success-foreground: 0 0% 100%;
+    --warning: 33 100% 60%;
+    --warning-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 188 94% 25%;
+    /* Borders and inputs */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 253 93% 63%;
 
-    /* CSR Platform specific colors */
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 98%;
-    
-    --warning: 45 93% 47%;
-    --warning-foreground: 0 0% 98%;
-    
-    --info: 221 83% 53%;
-    --info-foreground: 0 0% 98%;
-    
-    /* Impact tracking colors */
-    --impact-red: 0 84% 60%;
-    --impact-yellow: 45 93% 47%;
-    --impact-blue: 221 83% 53%;
-    --impact-green: 142 71% 45%;
-    
-    /* Thematic colors */
-    --health: 340 82% 52%;
-    --education: 221 83% 53%;
-    --climate: 142 71% 45%;
-    --livelihood: 28 85% 55%;
-    
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(188 94% 35%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(var(--success)) 0%, hsl(142 71% 55%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-
-    --radius: 0.5rem;
+    /* Border radius for modern look */
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -83,69 +78,42 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 15 23% 4%;
-    --foreground: 210 40% 98%;
+    /* Keep the same light theme for now - user wants light theme conversion */
+    --background: 0 0% 98%;
+    --foreground: 220 13% 18%;
 
-    --card: 15 25% 6%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 18%;
 
-    --popover: 15 25% 6%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
 
-    --primary: 340 79% 52%;
+    --primary: 253 93% 63%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 14%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 250 100% 97%;
+    --secondary-foreground: 253 93% 63%;
 
-    --muted: 220 13% 9%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 340 79% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 250 100% 97%;
+    --accent-foreground: 253 93% 63%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 12%;
-    --input: 215 25% 12%;
-    --ring: 340 79% 52%;
-
-    /* CMS Brand Colors - Inspired by professional tech branding */
-    --success: 142 71% 55%;
-    --success-foreground: 0 0% 100%;
-    
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    
-    --info: 340 79% 60%;
-    --info-foreground: 0 0% 100%;
-    
-    /* Impact tracking colors - CMS Theme */
-    --impact-red: 0 84% 65%;
-    --impact-yellow: 38 92% 60%;
-    --impact-blue: 340 79% 60%;
-    --impact-green: 142 71% 60%;
-    
-    /* Thematic colors - CMS Professional */
-    --health: 340 79% 60%;
-    --education: 340 79% 65%;
-    --climate: 142 71% 60%;
-    --livelihood: 38 92% 65%;
-    
-    /* Gradients - CMS Brand */
-    --gradient-primary: linear-gradient(135deg, hsl(340 79% 52%) 0%, hsl(340 79% 60%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 71% 55%) 0%, hsl(340 79% 60%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(340 79% 52%) 0%, hsl(38 92% 50%) 100%);
-
-    --sidebar-background: 15 27% 5%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 340 79% 52%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 253 93% 63%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 9%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 25% 12%;
-    --sidebar-ring: 340 79% 52%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -157,19 +125,31 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
-
-  /* Force dark mode for the CSR platform */
-  html {
-    color-scheme: dark;
-  }
+}
+.text-white {
+  color: #fff !important ;
+  background-color: #80D763;
 }
 
-/* global.css or tailwind.css */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+.text-\[\#e52464\] {
+    --tw-text-opacity: 1;
+    color:#6F49F8 !important ;
 }
 
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE/Edge */
-  scrollbar-width: none;     /* Firefox */
+.border-\[\#e52464\] {
+    --tw-border-opacity: 1;
+    border-color: #6f49f8 !important ;
+}
+
+.hover\:bg-\[\#c41c53\]:hover {
+    --tw-bg-opacity: 1;
+    background-color: #6f49f8 !important ;
+}
+
+.focus\:ring-\[\#e52464\]:focus {
+    --tw-ring-opacity: 1;
+    --tw-ring-color: #6f49f8 !important ;
+}
+.bg-black\/30{
+    background-color: #ffffff !important ;
 }

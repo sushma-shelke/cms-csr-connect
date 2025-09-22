@@ -92,7 +92,7 @@ export function NGODashboard() {
 
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card style={{ borderLeft:'5px solid #6F49F8' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -104,39 +104,39 @@ export function NGODashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #8ECE33FF' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Beneficiaries</p>
                 <p className="text-2xl font-bold">{stats.totalBeneficiaries.toLocaleString()}</p>
               </div>
-              <Users className="h-8 w-8 text-success" />
+              <Users className="h-8 w-8" color="#8ECE33FF" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FFB800' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Budget Utilized</p>
                 <p className="text-2xl font-bold">{stats.budgetUtilized}%</p>
               </div>
-              <IndianRupee className="h-8 w-8 text-info" />
+              <IndianRupee className="h-8 w-8 " color="#FFB800" />
             </div>
-            <Progress value={stats.budgetUtilized} className="h-2 mt-2" />
+            {/* <Progress value={stats.budgetUtilized} className="h-2 mt-2" fill="#FFB800" /> */}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card style={{ borderLeft:'5px solid #FF74DAFF' }}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pending Reports</p>
-                <p className="text-2xl font-bold text-warning">{stats.pendingReports}</p>
+                <p className="text-2xl font-bold">{stats.pendingReports}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-warning" />
+              <AlertTriangle className="h-8 w-8" color="#FF74DAFF" />
             </div>
           </CardContent>
         </Card>
