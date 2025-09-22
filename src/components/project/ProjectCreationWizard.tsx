@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,9 @@ import { cn } from "@/lib/utils";
 interface ProjectCreationWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (payload: any) => void; // ✅ new
 }
+
 
 interface BudgetItem {
   id: string;
@@ -54,7 +57,7 @@ interface CustomBudgetColumn {
   type: 'decimal' | 'integer';
 }
 
-export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWizardProps) {
+export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -837,7 +840,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
           </div>
         );
 
-      case 4:
+      case 5:
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -847,7 +850,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {monthlyTargets.map((target, index) => (
-                <Card key={index}>
+                <Card key={target.month}>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm">{target.month}</CardTitle>
                   </CardHeader>
@@ -885,7 +888,7 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
           </div>
         );
 
-      case 5:
+      case 6:
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -970,18 +973,58 @@ export function ProjectCreationWizard({ open, onOpenChange }: ProjectCreationWiz
     }
   };
 
-  const handleSubmit = () => {
-    // Here you would typically submit the project data
-    console.log('Project Data:', {
-      projectData,
-      budgetCategories,
-      budgetItems,
-      monthlyTargets,
-      startDate,
-      endDate
-    });
-    onOpenChange(false);
+const handleSubmit = () => {
+  const payload = {
+    projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
+    projectHead: projectData.projectHead,
+    projectName: projectData.name,
+    projectTheme: projectData.theme,
+    projectNgoPartner: projectData.ngoPartner,
+    expectedBeneficiaries: projectData.beneficiaries,
+    projectLocation: projectData.location,
+    projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
+    projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
+    projectDescription: projectData.description,
+    projectObjectives: projectData.objectives,
+    budget: {
+      humanResourcesCost: budgetCategories.humanResources,
+      adminCost: budgetCategories.adminCost,
+      managementAndCoordinationCost: budgetCategories.managementCoordination,
+      miscellaneousCost: budgetCategories.miscellaneous,
+      governmentConvergenceCost: budgetCategories.governmentConvergence,
+      totalBudget:
+        budgetCategories.humanResources +
+        budgetCategories.adminCost +
+        budgetCategories.managementCoordination +
+        budgetCategories.miscellaneous +
+        budgetCategories.governmentConvergence,
+    },
+    budgetAllocationMatrix: budgetItems.map((item) => ({
+      srNo: item.serialNo,
+      description: item.description,
+      unit: item.unit,
+      unitCost: item.unitCost,
+      quantity: item.quantity,
+      cmsContri: item.cmsContribution,
+      ngoContri: item.ngoContribution,
+      beneficiaryContri: item.beneficiaryContribution,
+      governmentContri: item.governmentContribution,
+    })),
+    workPlan: {
+      workPlanDetails: monthlyTargets
+        .map((m) => `${m.month}: ${m.description}`)
+        .join(", "),
+    },
+    monthlyTarget: monthlyTargets.reduce((acc, cur) => {
+      acc[cur.month.toLowerCase()] = cur.target;
+      return acc;
+    }, {} as Record<string, number>),
+    projectStatus: "Active",
   };
+
+  onSubmit(payload);  // ✅ send payload back
+  onOpenChange(false); // ✅ close wizard
+};
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
