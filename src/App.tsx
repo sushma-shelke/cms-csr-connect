@@ -20,6 +20,7 @@ import ClimateResilienceThematic from "./pages/ClimateResilienceThematic";
 import LivelihoodThematic from "./pages/LivelihoodThematic";
 import AddNGO from "./pages/AddNGO";
 import bgVideo from "./assets/bg.mp4";
+import { NGOCreationWizard } from "./components/ngo/NGOCreationWizard";
 
 
 const queryClient = new QueryClient();
@@ -50,7 +51,16 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/ngos" element={<NGOManagement />} />
-                <Route path="/add-ngo" element={<AddNGO/>} />
+                <Route
+                  path="/add-ngo"
+                  element={
+                    <NGOCreationWizard
+                      open={true}
+                      onOpenChange={() => {}}
+                      onSubmit={() => {}}
+                    />
+                  }
+                />
                 <Route path="/ngo-updates" element={<NGOQuickUpdates />} />
                 <Route path="/projects" element={<ProjectManagement />} />
                 <Route path="/finance" element={<FinancialManagement />} />
