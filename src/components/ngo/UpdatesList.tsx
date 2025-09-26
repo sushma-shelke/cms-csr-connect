@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +16,13 @@ import {
   Eye
 } from "lucide-react";
 import { format } from "date-fns";
+import api from "../../api/axios"; 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Update {
   id: string;
@@ -24,7 +31,7 @@ interface Update {
   title: string;
   description: string;
   progress: number;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "In Progress";
   submittedAt: Date;
   submittedBy: string;
   challenges?: string;
@@ -32,61 +39,79 @@ interface Update {
   mediaCount: number;
 }
 
-const mockUpdates: Update[] = [
-  {
-    id: "1",
-    projectName: "Rural Health Initiative - Phase 1",
-    updateType: "Weekly Progress",
-    title: "Mobile Health Camp Completed in Village A",
-    description: "Successfully conducted a 3-day mobile health camp serving 450+ villagers. Provided basic health checkups, vaccinations, and health awareness sessions.",
-    progress: 65,
-    status: "approved",
-    submittedAt: new Date(2024, 8, 10),
-    submittedBy: "Dr. Priya Sharma",
-    challenges: "Limited transportation to remote areas",
-    nextSteps: "Plan next camp in Village B, arrange for medical supplies",
-    mediaCount: 8
-  },
-  {
-    id: "2",
-    projectName: "Education Access Program",
-    updateType: "Milestone Achievement",
-    title: "100 Students Enrolled in Digital Literacy Program",
-    description: "Reached our Q3 target of 100 student enrollments. Set up computer lab with 20 workstations and trained 5 local teachers.",
-    progress: 75,
-    status: "pending",
-    submittedAt: new Date(2024, 8, 9),
-    submittedBy: "Rajesh Kumar",
-    nextSteps: "Begin advanced modules, expand to neighboring schools",
-    mediaCount: 12
-  },
-  {
-    id: "3",
-    projectName: "Clean Water Project",
-    updateType: "Challenge Alert",
-    title: "Delay in Borewell Construction",
-    description: "Encountered rocky terrain at the planned borewell site. Need to relocate to alternative site identified by geological survey.",
-    progress: 40,
-    status: "pending",
-    submittedAt: new Date(2024, 8, 8),
-    submittedBy: "Anita Desai",
-    challenges: "Geological challenges, need additional machinery",
-    nextSteps: "Complete geological survey of new site, arrange heavy machinery",
-    mediaCount: 5
-  }
-];
+interface UpdateDetailsApi {
+  id: number;
+  project: string;
+  updateType: string;
+  updateTitle: string;
+  progressDescription: string;
+  overallProgress: number;
+  currentChallenges: string;
+  nextSteps: string;
+  mediaFilesCount: number;
+  mediaFiles: any;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export function UpdatesList() {
-  const [selectedUpdate, setSelectedUpdate] = useState<Update | null>(null);
+  const [updates, setUpdates] = useState<Update[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUpdate, setSelectedUpdate] = useState<UpdateDetailsApi | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    api
+      .get("/api/quick-updates")
+      .then((res) => {
+        const data = res.data;
+
+        const mapped = data.map((item: any) => ({
+          id: String(item.id),
+          projectName: item.project,
+          updateType: item.updateType,
+          title: item.updateTitle,
+          description: item.progressDescription,
+          progress: item.overallProgress,
+          status: item.status,
+          submittedAt: new Date(item.createdAt),
+          submittedBy: "System",
+          challenges: item.currentChallenges,
+          nextSteps: item.nextSteps,
+          mediaCount: item.mediaFilesCount,
+        }));
+
+        setUpdates(mapped);
+      })
+      .catch((err) => {
+        console.error("Error fetching updates:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  const handleViewDetails = async (id: string) => {
+    try {
+      const res = await api.get(`/api/quick-updates/${id}`);
+      setSelectedUpdate(res.data);
+      setIsDialogOpen(true);
+    } catch (err) {
+      console.error("Error fetching update details:", err);
+    }
+  };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "approved":
         return "bg-success text-white";
       case "pending":
         return "bg-warning text-white";
       case "rejected":
         return "bg-destructive text-white";
+      case "in progress":
+        return "bg-primary text-white";
       default:
         return "bg-muted";
     }
@@ -108,15 +133,21 @@ export function UpdatesList() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "approved":
         return <CheckCircle className="h-4 w-4 text-success" />;
       case "rejected":
         return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      case "in progress":
+        return <Clock className="h-4 w-4 text-primary" />;
       default:
         return <Clock className="h-4 w-4 text-warning" />;
     }
   };
+
+  if (loading) {
+    return <p>Loading updates...</p>;
+  }
 
   return (
     <div className="space-y-4">
@@ -128,14 +159,17 @@ export function UpdatesList() {
       </div>
 
       <div className="grid gap-4">
-        {mockUpdates.map((update) => (
+        {updates.map((update) => (
           <Card key={update.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-3">
                   <Avatar>
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {update.submittedBy.split(' ').map(n => n[0]).join('')}
+                      {update.submittedBy
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -170,20 +204,6 @@ export function UpdatesList() {
                   </div>
                   <Progress value={update.progress} className="h-2" />
                 </div>
-
-                {update.challenges && (
-                  <div>
-                    <span className="text-sm font-medium text-destructive">Challenges:</span>
-                    <p className="text-sm text-muted-foreground mt-1">{update.challenges}</p>
-                  </div>
-                )}
-
-                {update.nextSteps && (
-                  <div>
-                    <span className="text-sm font-medium text-primary">Next Steps:</span>
-                    <p className="text-sm text-muted-foreground mt-1">{update.nextSteps}</p>
-                  </div>
-                )}
               </div>
 
               <Separator className="my-4" />
@@ -197,7 +217,11 @@ export function UpdatesList() {
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewDetails(update.id)}
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   View Details
                 </Button>
@@ -206,6 +230,46 @@ export function UpdatesList() {
           </Card>
         ))}
       </div>
+
+      {/* 🔹 Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          {selectedUpdate ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedUpdate.updateTitle}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Project:</strong> {selectedUpdate.project}
+                </p>
+                <p>{selectedUpdate.progressDescription}</p>
+                <p>
+                  <strong>Progress:</strong> {selectedUpdate.overallProgress}%
+                </p>
+                {selectedUpdate.currentChallenges && (
+                  <p className="text-destructive">
+                    <strong>Challenges:</strong> {selectedUpdate.currentChallenges}
+                  </p>
+                )}
+                {selectedUpdate.nextSteps && (
+                  <p className="text-primary">
+                    <strong>Next Steps:</strong> {selectedUpdate.nextSteps}
+                  </p>
+                )}
+                <p>
+                  <strong>Status:</strong> {selectedUpdate.status}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Created: {format(new Date(selectedUpdate.createdAt), "PPPp")}
+                </p>
+              </div>
+            </>
+          ) : (
+            <p>Loading details...</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
