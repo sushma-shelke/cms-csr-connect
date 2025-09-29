@@ -153,3 +153,10 @@ All colors MUST be HSL.
 .bg-black\/30{
     background-color: #ffffff !important ;
 }
+
+.data-\[state\=active\]\:text-foreground[data-state="active"]{
+      color: hsl(247.38deg 73.36% 64.53%) !important;
+}
+.data-\[state\=active\]\:bg-background[data-state="active"] {
+    background-color: hsl(232.62deg 87.19% 95.9%) !important ;
+}
