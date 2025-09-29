@@ -150,6 +150,10 @@ All colors MUST be HSL.
     --tw-ring-opacity: 1;
     --tw-ring-color: #6f49f8 !important ;
 }
+.hover\:bg-sidebar-accent:hover{
+    background-color: #6f49f8 !important ;  
+}
+
 .bg-black\/30{
     background-color: #ffffff !important ;
 }
