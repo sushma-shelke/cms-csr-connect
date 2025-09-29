@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +12,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, FileText, Video, Image, Mic, CheckCircle, XCircle, Clock, AlertTriangle, Target, TrendingUp, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
+import api from "../../api/axios";
 
 interface MISReport {
+  misReportSubmissionDateTime: any;
+  project: ReactNode;
+  reportingPeriod: ReactNode;
+  allocatedTarget: ReactNode;
+  completedTarget: ReactNode;
+  deviationReport: any;
   id: string;
   projectId: string;
   projectName: string;
@@ -34,64 +41,11 @@ interface MISReport {
   }>;
 }
 
-const mockReports: MISReport[] = [
-  {
-    id: "1",
-    projectId: "1",
-    projectName: "Rural Health Initiative",
-    month: "August",
-    year: 2024,
-    targetAllocated: 100,
-    currentPerformance: 85,
-    achievementPercentage: 85,
-    status: 'approved',
-    submissionDate: "2024-08-25",
-    attachments: [
-      { type: 'excel', name: 'Monthly_Report_Aug.xlsx', url: '#' },
-      { type: 'pdf', name: 'Evidence_Aug.pdf', url: '#' }
-    ]
-  },
-  {
-    id: "2", 
-    projectId: "2",
-    projectName: "Digital Education Program",
-    month: "August",
-    year: 2024,
-    targetAllocated: 80,
-    currentPerformance: 56,
-    achievementPercentage: 70,
-    status: 'pending',
-    submissionDate: "2024-08-22",
-    deviation: "Delayed due to monsoon season affecting field activities",
-    mitigationPlan: "Extended training sessions in September, additional resources allocated",
-    attachments: [
-      { type: 'video', name: 'Training_Session.mp4', url: '#' },
-      { type: 'word', name: 'Progress_Report.docx', url: '#' }
-    ]
-  },
-  {
-    id: "3",
-    projectId: "3", 
-    projectName: "Climate Awareness Campaign",
-    month: "August",
-    year: 2024,
-    targetAllocated: 60,
-    currentPerformance: 25,
-    achievementPercentage: 42,
-    status: 'rejected',
-    submissionDate: "2024-08-20",
-    deviation: "Low community participation due to festival season",
-    mitigationPlan: "Reschedule activities post-festival, community leader engagement",
-    carryForward: 35,
-    attachments: [
-      { type: 'pdf', name: 'Community_Feedback.pdf', url: '#' }
-    ]
-  }
-];
-
 export function MISReportManager() {
   const [selectedProject, setSelectedProject] = useState("");
-  // const [isSubmissionPeriodOpen, setIsSubmissionPeriodOpen] = useState(true); // Simulating 21st-25th period
+  const [reports, setReports] = useState<MISReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [reportFormData, setReportFormData] = useState({
     targetAllocated: "",
     currentPerformance: "",
@@ -100,10 +54,112 @@ export function MISReportManager() {
     attachments: [] as File[]
   });
 
-   // 🔹 Auto-calculate submission period
+  // 🔹 Auto-calculate submission period and current month dates
   const today = new Date();
   const day = today.getDate();
   const isSubmissionPeriodOpen = day >= 21 && day <= 25;
+  
+  // Get current month's start and end dates
+  const getCurrentMonthDateRange = () => {
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+    
+    return {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString()
+    };
+  };
+
+  // Get month name from date
+  const getMonthName = (date: Date) => {
+    return date.toLocaleString('default', { month: 'long' });
+  };
+
+  // Get current reporting period (month and year)
+  const currentReportingPeriod = {
+    month: getMonthName(today),
+    year: today.getFullYear()
+  };
+
+  // Fetch reports from API
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const { startDate, endDate } = getCurrentMonthDateRange();
+      
+       const response = await api.get(`api/mis-reports/date-range`, {
+        params: {
+          startDate,
+          endDate
+        }
+      });
+      
+      // Ensure reports is always an array, even if API returns null
+      setReports(Array.isArray(response.data) ? response.data : []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching MIS reports:', err);
+      setError('Failed to load reports. Please try again.');
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Submit new report
+  const submitReport = async () => {
+    if (!selectedProject) {
+      alert('Please select a project');
+      return;
+    }
+
+    try {
+      const achievementPercentage = calculateAchievementPercentage();
+      
+      const reportData = {
+        projectId: selectedProject,
+        month: currentReportingPeriod.month,
+        year: currentReportingPeriod.year,
+        targetAllocated: Number(reportFormData.targetAllocated),
+        currentPerformance: Number(reportFormData.currentPerformance),
+        achievementPercentage,
+        deviation: reportFormData.deviation || null,
+        mitigationPlan: reportFormData.mitigationPlan || null,
+        carryForward: achievementPercentage < 100 ? 
+          Number(reportFormData.targetAllocated) - Number(reportFormData.currentPerformance) : 0,
+        status: 'submitted' as const,
+        submissionDate: new Date().toISOString(),
+        attachments: [] // You'll need to handle file uploads separately
+      };
+
+      await api.post('/mis-reports', reportData);
+      
+      // Refresh reports
+      await fetchReports();
+      
+      // Reset form
+      setReportFormData({
+        targetAllocated: "",
+        currentPerformance: "",
+        deviation: "",
+        mitigationPlan: "",
+        attachments: []
+      });
+      setSelectedProject("");
+      
+      alert('Report submitted successfully!');
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      alert('Failed to submit report. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   const getPerformanceColor = (percentage: number) => {
     if (percentage >= 80) return "text-impact-green";
@@ -148,12 +204,33 @@ export function MISReportManager() {
     return target > 0 ? Math.round((performance / target) * 100) : 0;
   };
 
+  // Calculate performance statistics
+  const performanceStats = {
+    excellent: reports.filter(report => report.achievementPercentage >= 80).length,
+    good: reports.filter(report => report.achievementPercentage >= 50 && report.achievementPercentage < 80).length,
+    needsAttention: reports.filter(report => report.achievementPercentage >= 30 && report.achievementPercentage < 50).length,
+    critical: reports.filter(report => report.achievementPercentage < 30).length
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <Clock className="h-8 w-8 mx-auto mb-2 animate-spin" />
+          <p>Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-foreground">MIS Report Management</h2>
-          <p className="text-muted-foreground">Monthly reporting portal (21st-25th)</p>
+          <p className="text-muted-foreground">
+            Monthly reporting portal (21st-25th) - {currentReportingPeriod.month} {currentReportingPeriod.year}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {isSubmissionPeriodOpen ? (
@@ -168,6 +245,18 @@ export function MISReportManager() {
         </div>
       </div>
 
+      {/* Error Alert */}
+      {error && (
+        <Card className="border-impact-red bg-impact-red/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-impact-red" />
+              <p className="text-impact-red">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Submission Period Alert */}
       {isSubmissionPeriodOpen && (
         <Card className="border-impact-green bg-impact-green/5">
@@ -176,7 +265,10 @@ export function MISReportManager() {
               <Target className="h-5 w-5 text-impact-green" />
               <div>
                 <p className="font-medium text-impact-green">Submission Period Active</p>
-                <p className="text-sm text-muted-foreground">Submit your monthly reports between 21st-25th of each month</p>
+                <p className="text-sm text-muted-foreground">
+                  Submit your monthly reports between 21st-25th of each month. 
+                  Reports will remain visible until the next submission period.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -194,172 +286,213 @@ export function MISReportManager() {
           {/* Reports Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Reports</CardTitle>
+              <CardTitle>
+                Monthly Reports - {currentReportingPeriod.month} {currentReportingPeriod.year}
+                {reports.length > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    ({reports.length} reports found)
+                  </span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Target vs Achievement</TableHead>
-                    <TableHead>Performance</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockReports.map((report) => (
-                    <TableRow key={report.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{report.projectName}</p>
-                          <p className="text-sm text-muted-foreground">ID: {report.projectId}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{report.month} {report.year}</p>
-                          {report.submissionDate && (
-                            <p className="text-sm text-muted-foreground">
-                              Submitted: {new Date(report.submissionDate).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>Target: {report.targetAllocated}</span>
-                            <span>Achieved: {report.currentPerformance}</span>
-                          </div>
-                          <Progress value={report.achievementPercentage} className="w-24" />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className={cn("font-medium", getPerformanceColor(report.achievementPercentage))}>
-                            {report.achievementPercentage}%
-                          </span>
-                          <Badge className={getPerformanceBadge(report.achievementPercentage).color + " text-white"}>
-                            {getPerformanceBadge(report.achievementPercentage).text}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(report.status)}
-                          <span className="capitalize">{report.status}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">View Details</Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>{report.projectName} - {report.month} {report.year}</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-6">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <Card>
-                                  <CardContent className="p-4">
-                                    <div className="text-center">
-                                      <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
-                                      <p className="text-sm text-muted-foreground">Target Allocated</p>
-                                      <p className="text-2xl font-bold">{report.targetAllocated}</p>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                                <Card>
-                                  <CardContent className="p-4">
-                                    <div className="text-center">
-                                      <TrendingUp className="h-8 w-8 mx-auto mb-2 text-success" />
-                                      <p className="text-sm text-muted-foreground">Current Performance</p>
-                                      <p className="text-2xl font-bold">{report.currentPerformance}</p>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                                <Card>
-                                  <CardContent className="p-4">
-                                    <div className="text-center">
-                                      <div className={cn("text-2xl font-bold", getPerformanceColor(report.achievementPercentage))}>
-                                        {report.achievementPercentage}%
-                                      </div>
-                                      <p className="text-sm text-muted-foreground">Achievement</p>
-                                      <Badge className={getPerformanceBadge(report.achievementPercentage).color + " text-white mt-1"}>
-                                        {getPerformanceBadge(report.achievementPercentage).text}
-                                      </Badge>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </div>
-
-                              {report.deviation && (
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle className="text-sm">Deviation Report</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <p className="text-sm">{report.deviation}</p>
-                                  </CardContent>
-                                </Card>
-                              )}
-
-                              {report.mitigationPlan && (
-                                <Card>
-                                  <CardHeader>
-                                    <CardTitle className="text-sm">Mitigation Plan</CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <p className="text-sm">{report.mitigationPlan}</p>
-                                  </CardContent>
-                                </Card>
-                              )}
-
-                              {report.carryForward && (
-                                <Card className="border-impact-yellow bg-impact-yellow/5">
-                                  <CardContent className="p-4">
-                                    <div className="flex items-center gap-2">
-                                      <AlertTriangle className="h-5 w-5 text-impact-yellow" />
-                                      <div>
-                                        <p className="font-medium">Target Carry Forward</p>
-                                        <p className="text-sm text-muted-foreground">
-                                          {report.carryForward} targets carried forward to next month
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              )}
-
-                              <Card>
-                                <CardHeader>
-                                  <CardTitle className="text-sm">Attachments</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {report.attachments.map((attachment, index) => (
-                                      <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
-                                        {attachment.type === 'excel' && <FileSpreadsheet className="h-4 w-4 text-success" />}
-                                        {attachment.type === 'word' && <FileText className="h-4 w-4 text-info" />}
-                                        {attachment.type === 'video' && <Video className="h-4 w-4 text-warning" />}
-                                        {attachment.type === 'pdf' && <FileText className="h-4 w-4 text-destructive" />}
-                                        <span className="text-sm">{attachment.name}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
+              {reports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-16 w-16 mx-auto mb-4" />
+                  <p>No reports found for {currentReportingPeriod.month} {currentReportingPeriod.year}</p>
+                  <p className="text-sm">Reports submitted between 21st-25th will appear here</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sr. No</TableHead>
+                      <TableHead>Project</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead>Target</TableHead>
+                      <TableHead>Performance</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                {reports.map((report, index) => {
+  const achievementValue = parseInt(report.achievementPercentage.replace("%", ""), 10);
+
+  return (
+    <TableRow key={report.id}>
+      {/* Sr. No. */}
+      <TableCell>{index + 1}</TableCell>
+
+      {/* Project */}
+      <TableCell>
+        <div>
+          <p className="font-medium">{report.project}</p>
+        </div>
+      </TableCell>
+
+      {/* Reporting Period + Submission Date */}
+      <TableCell>
+        <div>
+          <p className="font-medium">{report.reportingPeriod}</p>
+          {report.misReportSubmissionDateTime && (
+            <p className="text-sm text-muted-foreground">
+              Submitted: {new Date(report.misReportSubmissionDateTime).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </TableCell>
+
+      {/* Targets + Progress */}
+      <TableCell>
+        <div className="space-y-1">
+          <div className="flex justify-between text-sm">
+            <span>Target: {report.allocatedTarget}</span>
+            {/* <span>Achieved: {report.completedTarget}</span> */}
+          </div>
+          <Progress value={achievementValue} className="w-24" />
+        </div>
+      </TableCell>
+
+      {/* Achievement % + Badge */}
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <span className={cn("font-medium", getPerformanceColor(achievementValue))}>
+            {report.achievementPercentage}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Badge className={getPerformanceBadge(achievementValue).color + " text-white"}>
+            {getPerformanceBadge(achievementValue).text}
+          </Badge>
+        </div>
+      </TableCell>
+
+      {/* Actions (View + Update + Delete) */}
+      <TableCell>
+        <div className="flex space-x-2">
+          {/* View Button with Dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="secondary" size="sm">View</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>{report.project} - {report.reportingPeriod}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <Target className="h-8 w-8 mx-auto mb-2 text-primary" />
+                        <p className="text-sm text-muted-foreground">Target Allocated</p>
+                        <p className="text-2xl font-bold">{report.allocatedTarget}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <TrendingUp className="h-8 w-8 mx-auto mb-2 text-success" />
+                        <p className="text-sm text-muted-foreground">Current Performance</p>
+                        <p className="text-2xl font-bold">{report.completedTarget}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-center">
+                        <div className={cn("text-2xl font-bold", getPerformanceColor(achievementValue))}>
+                          {report.achievementPercentage}
+                        </div>
+                        <p className="text-sm text-muted-foreground">Achievement</p>
+                        <Badge className={getPerformanceBadge(achievementValue).color + " text-white mt-1"}>
+                          {getPerformanceBadge(achievementValue).text}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {report.deviationReport && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Deviation Report</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm">{report.deviationReport}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {report.mitigationPlan && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Mitigation Plan</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm">{report.mitigationPlan}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {report.attachments && Array.isArray(report.attachments) && report.attachments.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Attachments</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {report.attachments.map((attachment, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+                            {attachment.type === 'excel' && <FileSpreadsheet className="h-4 w-4 text-success" />}
+                            {attachment.type === 'word' && <FileText className="h-4 w-4 text-info" />}
+                            {attachment.type === 'video' && <Video className="h-4 w-4 text-warning" />}
+                            {attachment.type === 'pdf' && <FileText className="h-4 w-4 text-destructive" />}
+                            <span className="text-sm">{attachment.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Update Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openEditDialog(report.id)}
+          >
+            Update
+          </Button>
+
+          {/* Delete Button */}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDelete(report.id)}
+          >
+            Delete
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+})}
+
+
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -387,7 +520,11 @@ export function MISReportManager() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="period">Reporting Period</Label>
-                    <Input value="September 2024" disabled className="bg-muted" />
+                    <Input 
+                      value={`${currentReportingPeriod.month} ${currentReportingPeriod.year}`} 
+                      disabled 
+                      className="bg-muted" 
+                    />
                   </div>
                 </div>
 
@@ -491,7 +628,11 @@ export function MISReportManager() {
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button className="bg-primary hover:bg-primary/90">
+                  <Button 
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={submitReport}
+                    disabled={!selectedProject || !reportFormData.targetAllocated || !reportFormData.currentPerformance}
+                  >
                     Submit Report
                   </Button>
                 </div>
@@ -504,6 +645,7 @@ export function MISReportManager() {
                 <h3 className="text-lg font-semibold mb-2">Submission Period Closed</h3>
                 <p className="text-muted-foreground">
                   Monthly report submissions are only accepted between 21st-25th of each month.
+                  Please check back during the submission period.
                 </p>
               </CardContent>
             </Card>
@@ -517,7 +659,7 @@ export function MISReportManager() {
                 <div className="text-center">
                   <Target className="h-8 w-8 mx-auto mb-2 text-success" />
                   <p className="text-sm text-muted-foreground">Excellent Performance</p>
-                  <p className="text-2xl font-bold text-impact-green">1</p>
+                  <p className="text-2xl font-bold text-impact-green">{performanceStats.excellent}</p>
                 </div>
               </CardContent>
             </Card>
@@ -527,7 +669,7 @@ export function MISReportManager() {
                 <div className="text-center">
                   <TrendingUp className="h-8 w-8 mx-auto mb-2 text-info" />
                   <p className="text-sm text-muted-foreground">Good Performance</p>
-                  <p className="text-2xl font-bold text-impact-blue">1</p>
+                  <p className="text-2xl font-bold text-impact-blue">{performanceStats.good}</p>
                 </div>
               </CardContent>
             </Card>
@@ -537,7 +679,7 @@ export function MISReportManager() {
                 <div className="text-center">
                   <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-warning" />
                   <p className="text-sm text-muted-foreground">Needs Attention</p>
-                  <p className="text-2xl font-bold text-impact-yellow">0</p>
+                  <p className="text-2xl font-bold text-impact-yellow">{performanceStats.needsAttention}</p>
                 </div>
               </CardContent>
             </Card>
@@ -547,7 +689,7 @@ export function MISReportManager() {
                 <div className="text-center">
                   <XCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
                   <p className="text-sm text-muted-foreground">Critical</p>
-                  <p className="text-2xl font-bold text-impact-red">1</p>
+                  <p className="text-2xl font-bold text-impact-red">{performanceStats.critical}</p>
                 </div>
               </CardContent>
             </Card>
@@ -555,14 +697,31 @@ export function MISReportManager() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Performance Trend Analysis</CardTitle>
+              <CardTitle>Performance Trend Analysis - {currentReportingPeriod.month} {currentReportingPeriod.year}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <TrendingUp className="h-16 w-16 mx-auto mb-4" />
-                <p>Performance analytics visualization would be implemented here</p>
-                <p className="text-sm">Charts showing monthly trends, comparative analysis, etc.</p>
-              </div>
+              {reports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <TrendingUp className="h-16 w-16 mx-auto mb-4" />
+                  <p>No data available for analysis</p>
+                  <p className="text-sm">Submit reports to see performance analytics</p>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <TrendingUp className="h-16 w-16 mx-auto mb-4" />
+                  <p>Performance analytics visualization would be implemented here</p>
+                  <p className="text-sm">Charts showing monthly trends, comparative analysis, etc.</p>
+                  <div className="mt-4 text-left">
+                    <p className="font-medium">Current Month Summary:</p>
+                    <ul className="text-sm mt-2 space-y-1">
+                      <li>• Total Reports: {reports.length}</li>
+                      <li>• Average Achievement: {Math.round(reports.reduce((sum, r) => sum + r.achievementPercentage, 0) / reports.length)}%</li>
+                      <li>• Highest Performance: {Math.max(...reports.map(r => r.achievementPercentage))}%</li>
+                      <li>• Lowest Performance: {Math.min(...reports.map(r => r.achievementPercentage))}%</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
