@@ -11,7 +11,7 @@ import { Star } from "lucide-react"; // add this import
 
 
 interface QuickUpdateFormData {
-  rating: number;
+  // rating: number;
   projectId: string;
   updateType: string;
   title: string;
@@ -27,7 +27,7 @@ interface QuickUpdateFormData {
 
 export function QuickUpdateForm() {
   const [formData, setFormData] = useState<QuickUpdateFormData>({
-    rating: 0,
+    // rating: 0,
     projectId: "",
     updateType: "",
     title: "",
@@ -76,7 +76,7 @@ export function QuickUpdateForm() {
       
       // Reset form
       setFormData({
-        rating: 0,
+        // rating: 0,
         projectId: "",
         updateType: "",
         title: "",
@@ -116,10 +116,10 @@ export function QuickUpdateForm() {
       setFormData(prev => ({ ...prev, caseStudies: updatedCaseStudies }));
     }
   };
-  const handleRating = (value: number) => {
-    setFormData(prev => ({ ...prev, rating: value }));
-    console.log("Rating:", value); // log rating
-  };
+  // const handleRating = (value: number) => {
+  //   setFormData(prev => ({ ...prev, rating: value }));
+  //   console.log("Rating:", value); // log rating
+  // };
   return (
     <Card className="max-w-6xl mx-auto">
       <CardHeader>
@@ -286,7 +286,7 @@ export function QuickUpdateForm() {
           </div>
 
            {/* ⭐ Rating Field */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>Project Rating</Label>
             <div className="flex gap-5">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -299,7 +299,7 @@ export function QuickUpdateForm() {
                 />
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* existing fields below */}
 
