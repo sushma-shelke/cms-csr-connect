@@ -60,10 +60,10 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r">
-      <SidebarContent>
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-3">
+    <Sidebar className="border-r" style={{boxShadow:'2px 0px 8px #39373F27'}}>
+<SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">        
+  <div className="p-4 border-b border-border" >
+          <div className="flex items-center gap-3" >
             <div className="w-10 h-10 flex items-center justify-center">
               <img 
                 src={cmsLogo} 
@@ -80,7 +80,7 @@ export function AppSidebar() {
           </div>
         </div>
 
-        <SidebarGroup>
+        <SidebarGroup >
           <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -116,7 +116,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
+        <SidebarGroup className="mb-9">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
