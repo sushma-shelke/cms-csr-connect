@@ -12,33 +12,36 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Plus, Trash2, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import api from "../../api/axios";
 
 interface ProjectCreationWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (payload: any) => void; // ✅ new
+  onSubmit: (payload: any) => void;
+  editProjectId?: string; // For editing existing project
+  editProjectData?: any; // Existing project data for editing
 }
 
+interface MonthlyTargetData {
+  target: number;
+  description: string;
+}
 
 interface BudgetItem {
   id: string;
-  serialNo: number;
+  srNo: number;
+  itemName: string;
   description: string;
-  unit: string;
+  units: number;
   unitCost: number;
-  quantity: number;
   cmsContribution: number;
   ngoContribution: number;
   beneficiaryContribution: number;
   governmentContribution: number;
-  totalCost: number;
-  customColumns?: { [key: string]: number };
-}
-
-interface MonthlyTarget {
-  month: string;
-  target: number;
-  description: string;
+  budgetType: string;
+  monthlyTargets?: {
+    [month: string]: MonthlyTargetData;
+  };
 }
 
 interface SubProject {
@@ -51,16 +54,17 @@ interface SubProject {
   orderIndex: number;
 }
 
-interface CustomBudgetColumn {
-  id: string;
-  name: string;
-  type: 'decimal' | 'integer';
-}
-
-export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectCreationWizardProps) {
+export function ProjectCreationWizard({ 
+  open, 
+  onOpenChange, 
+  onSubmit, 
+  editProjectId, 
+  editProjectData 
+}: ProjectCreationWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Basic Project Information
   const [projectData, setProjectData] = useState({
@@ -72,50 +76,79 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
     projectHead: "",
     location: "",
     beneficiaries: "",
-    objectives: ""
-  });
-
-  // Budget Categories
-  const [budgetCategories, setBudgetCategories] = useState({
-    humanResources: 0,
-    adminCost: 0,
-    managementCoordination: 0,
-    miscellaneous: 0,
-    governmentConvergence: 0
+    objectives: "",
+    reportFile: null as File | null
   });
 
   // Budget Allocation Matrix
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([
     {
       id: "1",
-      serialNo: 1,
+      srNo: 1,
+      itemName: "",
       description: "",
-      unit: "",
+      units: 0,
       unitCost: 0,
-      quantity: 0,
       cmsContribution: 0,
       ngoContribution: 0,
       beneficiaryContribution: 0,
       governmentContribution: 0,
-      totalCost: 0,
-      customColumns: {}
+      budgetType: "PROCUREMENT_COST"
     }
   ]);
-
-  // Custom Budget Columns
-  // const [customBudgetColumns, setCustomBudgetColumns] = useState<CustomBudgetColumn[]>([]);
 
   // Sub-projects (for Integrated Village Development Program)
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
 
-  // Work Plan & Timeline
-  const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTarget[]>(
-    Array.from({ length: 12 }, (_, i) => ({
-      month: format(new Date(2024, i, 1), "MMMM"),
-      target: 0,
-      description: ""
-    }))
-  );
+  // Load edit data when component opens in edit mode
+  useState(() => {
+    if (open && editProjectId && editProjectData) {
+      loadEditData(editProjectData);
+    }
+  });
+
+  const loadEditData = (projectData: any) => {
+    // Set basic project data
+    setProjectData({
+      name: projectData.projectName || "",
+      description: projectData.projectDescription || "",
+      projectType: projectData.projectType === "IVDP" ? "integrated_village_development" : "thematic",
+      theme: projectData.projectTheme || "",
+      ngoPartner: projectData.projectNgoPartner || "",
+      projectHead: projectData.projectHead || "",
+      location: projectData.projectLocation || "",
+      beneficiaries: projectData.expectedBeneficiaries || "",
+      objectives: projectData.projectObjectives || "",
+      reportFile: null
+    });
+
+    // Set dates
+    if (projectData.projectStartDate) {
+      setStartDate(new Date(projectData.projectStartDate));
+    }
+    if (projectData.projectEndDate) {
+      setEndDate(new Date(projectData.projectEndDate));
+    }
+
+    // Set budget items
+    if (projectData.budgetAllocationItems && projectData.budgetAllocationItems.length > 0) {
+      const loadedBudgetItems = projectData.budgetAllocationItems.map((item: any, index: number) => ({
+        id: (index + 1).toString(),
+        srNo: item.srNo || index + 1,
+        itemName: item.itemName || "",
+        description: item.description || "",
+        units: item.units || 0,
+        unitCost: item.unitCost || 0,
+        cmsContribution: item.cmsContribution || 0,
+        ngoContribution: item.ngoContribution || 0,
+        beneficiaryContribution: item.beneficiaryContribution || 0,
+        governmentContribution: item.governmentContribution || 0,
+        budgetType: item.budgetType || "PROCUREMENT_COST",
+        monthlyTargets: item.monthlyTargets || {}
+      }));
+      setBudgetItems(loadedBudgetItems);
+    }
+  };
 
   const themes = [
     "Health",
@@ -140,42 +173,64 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
     "Mr. Vikash Singh - Government Liaison"
   ];
 
+  // Budget types based on project type
+  const thematicBudgetTypes = [
+    "PROCUREMENT_COST",
+    "TRAINING_COST", 
+    "CIVIL_CONSTRUCTION_COST",
+    "CONTINGENCY_MISCELLANEOUS_COST",
+    "HR_COST",
+    "ADMIN_COST",
+    "MANAGEMENT_COORDINATION_COST",
+    "GOVERNMENT_CONVERGENCE_COST"
+  ];
+
+  const ivdpBudgetTypes = [
+    "INVESTMENT_COST",
+    "TRAINING_COST",
+    "ON_CONTINUATION_COST", 
+    "CHARTING_VALIDATION_COSTS",
+    "HR_COST",
+    "ADMIN_COST",
+    "MANAGEMENT_COORDINATION_COST",
+    "GOVERNMENT_CONVERGENCE_COST"
+  ];
+
+  const getBudgetTypes = () => {
+    return projectData.projectType === 'thematic' ? thematicBudgetTypes : ivdpBudgetTypes;
+  };
+
+  const getMonthsBetweenDates = () => {
+    if (!startDate || !endDate) return [];
+    
+    const months = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    while (start <= end) {
+      months.push(format(start, "MMMM yyyy"));
+      start.setMonth(start.getMonth() + 1);
+    }
+    
+    return months;
+  };
+
   const addBudgetItem = () => {
     const newItem: BudgetItem = {
       id: Date.now().toString(),
-      serialNo: budgetItems.length + 1,
+      srNo: budgetItems.length + 1,
+      itemName: "",
       description: "",
-      unit: "",
+      units: 0,
       unitCost: 0,
-      quantity: 0,
       cmsContribution: 0,
       ngoContribution: 0,
       beneficiaryContribution: 0,
       governmentContribution: 0,
-      totalCost: 0,
-      customColumns: {}
+      budgetType: getBudgetTypes()[0]
     };
     setBudgetItems([...budgetItems, newItem]);
   };
-
-  // const addCustomColumn = () => {
-  //   const newColumn: CustomBudgetColumn = {
-  //     id: Date.now().toString(),
-  //     name: "",
-  //     type: "decimal"
-  //   };
-  //   setCustomBudgetColumns([...customBudgetColumns, newColumn]);
-  // };
-
-  // const removeCustomColumn = (id: string) => {
-  //   setCustomBudgetColumns(customBudgetColumns.filter(col => col.id !== id));
-  //   // Remove custom column values from all budget items
-  //   setBudgetItems(budgetItems.map(item => {
-  //     const newCustomColumns = { ...item.customColumns };
-  //     delete newCustomColumns[id];
-  //     return { ...item, customColumns: newCustomColumns };
-  //   }));
-  // };
 
   const addSubProject = () => {
     const newSubProject: SubProject = {
@@ -199,45 +254,106 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
   const updateBudgetItem = (id: string, field: keyof BudgetItem, value: any) => {
     setBudgetItems(budgetItems.map(item => {
       if (item.id === id) {
-        const updated = { ...item, [field]: value };
-        // Auto-calculate total cost
-        if (['unitCost', 'quantity', 'cmsContribution', 'ngoContribution', 'beneficiaryContribution', 'governmentContribution'].includes(field)) {
-          const customTotal = Object.values(updated.customColumns || {}).reduce((sum, val) => sum + (val || 0), 0);
-          updated.totalCost = updated.cmsContribution + updated.ngoContribution + updated.beneficiaryContribution + updated.governmentContribution + customTotal;
-        }
-        return updated;
+        return { ...item, [field]: value };
       }
       return item;
     }));
   };
 
-  const updateCustomColumnValue = (itemId: string, columnId: string, value: number) => {
+  const updateMonthlyTarget = (itemId: string, month: string, field: 'target' | 'description', value: any) => {
     setBudgetItems(budgetItems.map(item => {
       if (item.id === itemId) {
-        const customColumns = { ...item.customColumns, [columnId]: value };
-        const customTotal = Object.values(customColumns).reduce((sum, val) => sum + (val || 0), 0);
-        const totalCost = item.cmsContribution + item.ngoContribution + item.beneficiaryContribution + item.governmentContribution + customTotal;
-        return { ...item, customColumns, totalCost };
+        const updatedItem = { ...item };
+        if (!updatedItem.monthlyTargets) {
+          updatedItem.monthlyTargets = {};
+        }
+        if (!updatedItem.monthlyTargets[month]) {
+          updatedItem.monthlyTargets[month] = { target: 0, description: '' };
+        }
+        updatedItem.monthlyTargets[month] = {
+          ...updatedItem.monthlyTargets[month],
+          [field]: value
+        };
+        return updatedItem;
       }
       return item;
     }));
-  };
-
-  const getTotalBudget = () => {
-    return Object.values(budgetCategories).reduce((sum, value) => sum + value, 0);
   };
 
   const getTotalAllocation = () => {
-    return budgetItems.reduce((sum, item) => sum + item.totalCost, 0);
+    return budgetItems.reduce((sum, item) => {
+      const totalCost = item.units * item.unitCost;
+      return sum + totalCost;
+    }, 0);
   };
 
+  // Helper to count total targets set
+  const getTotalTargetsSet = () => {
+    return budgetItems.reduce((count, item) => {
+      if (item.monthlyTargets) {
+        return count + Object.values(item.monthlyTargets).filter(target => 
+          target.target > 0 || target.description.trim() !== ''
+        ).length;
+      }
+      return count;
+    }, 0);
+  };
+
+  // Calculate budget summary by type
+  const getBudgetSummary = () => {
+    const summary: any = {
+      humanResourcesCost: 0,
+      adminCost: 0,
+      managementAndCoordinationCost: 0,
+      miscellaneousCost: 0,
+      governmentConvergenceCost: 0,
+      procurementCost: 0,
+      civilConstructionCost: 0,
+      trainingCost: 0
+    };
+
+    budgetItems.forEach(item => {
+      const totalCost = item.units * item.unitCost;
+      switch (item.budgetType) {
+        case "HR_COST":
+          summary.humanResourcesCost += totalCost;
+          break;
+        case "ADMIN_COST":
+          summary.adminCost += totalCost;
+          break;
+        case "MANAGEMENT_COORDINATION_COST":
+          summary.managementAndCoordinationCost += totalCost;
+          break;
+        case "CONTINGENCY_MISCELLANEOUS_COST":
+          summary.miscellaneousCost += totalCost;
+          break;
+        case "GOVERNMENT_CONVERGENCE_COST":
+          summary.governmentConvergenceCost += totalCost;
+          break;
+        case "PROCUREMENT_COST":
+          summary.procurementCost += totalCost;
+          break;
+        case "CIVIL_CONSTRUCTION_COST":
+          summary.civilConstructionCost += totalCost;
+          break;
+        case "TRAINING_COST":
+          summary.trainingCost += totalCost;
+          break;
+      }
+    });
+
+    return summary;
+  };
+
+  // Updated steps - 7 step process (same as before)
   const steps = [
     { id: 1, title: "Project Type & Head", icon: "🎯" },
     { id: 2, title: "Basic Information", icon: "📋" },
-    { id: 3, title: "Budget Categories", icon: "💰" },
-    { id: 4, title: "Budget Allocation", icon: "📊" },
-    { id: 5, title: "Work Plan & Timeline", icon: "📅" },
-    { id: 6, title: "Review & Submit", icon: "✅" }
+    { id: 3, title: "Budget Allocation", icon: "💰" },
+    { id: 4, title: "Budget Review", icon: "📊" },
+    { id: 5, title: "Work Plan", icon: "📅" },
+    { id: 6, title: "Work Plan Review", icon: "🔍" },
+    { id: 7, title: "Overall Review", icon: "✅" }
   ];
 
   const renderStepContent = () => {
@@ -498,136 +614,27 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
                 className="min-h-[100px]"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectReport">Upload Project Report</Label>
+              <Input 
+                id="projectReport" 
+                type="file" 
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  setProjectData({ ...projectData, reportFile: file });
+                }}
+              />
+              {projectData.reportFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {projectData.reportFile.name}
+                </p>
+              )}
+            </div>
           </div>
         );
 
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold mb-2">Budget Categorization</h3>
-              <p className="text-muted-foreground">Define budget allocation across different cost categories</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-thematic-health">Human Resources Cost</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="humanResources">Amount (₹)</Label>
-                    <Input
-                      id="humanResources"
-                      type="number"
-                      value={budgetCategories.humanResources}
-                      onChange={(e) => setBudgetCategories({
-                        ...budgetCategories,
-                        humanResources: Number(e.target.value)
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-thematic-education">Admin Cost</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="adminCost">Amount (₹)</Label>
-                    <Input
-                      id="adminCost"
-                      type="number"
-                      value={budgetCategories.adminCost}
-                      onChange={(e) => setBudgetCategories({
-                        ...budgetCategories,
-                        adminCost: Number(e.target.value)
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-thematic-climate">Management & Coordination Cost</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="managementCoordination">Amount (₹)</Label>
-                    <Input
-                      id="managementCoordination"
-                      type="number"
-                      value={budgetCategories.managementCoordination}
-                      onChange={(e) => setBudgetCategories({
-                        ...budgetCategories,
-                        managementCoordination: Number(e.target.value)
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-thematic-livelihood">Miscellaneous Cost</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="miscellaneous">Amount (₹)</Label>
-                    <Input
-                      id="miscellaneous"
-                      type="number"
-                      value={budgetCategories.miscellaneous}
-                      onChange={(e) => setBudgetCategories({
-                        ...budgetCategories,
-                        miscellaneous: Number(e.target.value)
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-success">Government Convergence Cost</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="governmentConvergence">Amount (₹)</Label>
-                    <Input
-                      id="governmentConvergence"
-                      type="number"
-                      value={budgetCategories.governmentConvergence}
-                      onChange={(e) => setBudgetCategories({
-                        ...budgetCategories,
-                        governmentConvergence: Number(e.target.value)
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="bg-muted/50">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">Total Budget:</span>
-                  <span className="text-2xl font-bold text-primary">₹{getTotalBudget().toLocaleString()}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
-
-      case 4:
+      case 3: // Budget Allocation Matrix - NEW FORMAT without month dropdown
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -635,44 +642,37 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
                 <h3 className="text-lg font-semibold">Budget Allocation Matrix</h3>
                 <p className="text-muted-foreground">Detail breakdown with contribution tracking</p>
               </div>
-              <div className="flex gap-2">
-                {/* <Button onClick={addCustomColumn} variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Column
-                </Button> */}
-                <Button onClick={addBudgetItem} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
-              </div>
+              <Button onClick={addBudgetItem} size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </Button>
             </div>
 
-            {/* Custom Columns Management */}
-            {/* {customBudgetColumns.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Custom Budget Columns</CardTitle>
-                </CardHeader>
-               
-              </Card>
-            )} */}
-
             <div className="space-y-4">
-              {budgetItems.map((item, index) => (
+              {budgetItems.map((item) => (
                 <Card key={item.id}>
                   <CardContent className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-4">
                       <div className="space-y-2">
-                        <Label>S.No</Label>
+                        <Label className="text-xs">S.No</Label>
                         <Input
                           type="number"
-                          value={item.serialNo}
-                          onChange={(e) => updateBudgetItem(item.id, 'serialNo', Number(e.target.value))}
+                          value={item.srNo}
+                          onChange={(e) => updateBudgetItem(item.id, 'srNo', Number(e.target.value))}
                           className="text-sm"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <Label>Description</Label>
+                        <Label className="text-xs">Item Name</Label>
+                        <Input
+                          value={item.itemName}
+                          onChange={(e) => updateBudgetItem(item.id, 'itemName', e.target.value)}
+                          placeholder="Item name"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label className="text-xs">Description</Label>
                         <Input
                           value={item.description}
                           onChange={(e) => updateBudgetItem(item.id, 'description', e.target.value)}
@@ -681,16 +681,16 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Unit</Label>
+                        <Label className="text-xs">Units</Label>
                         <Input
-                          value={item.unit}
-                          onChange={(e) => updateBudgetItem(item.id, 'unit', e.target.value)}
-                          placeholder="Unit"
+                          type="number"
+                          value={item.units}
+                          onChange={(e) => updateBudgetItem(item.id, 'units', Number(e.target.value))}
                           className="text-sm"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Unit Cost</Label>
+                        <Label className="text-xs">Unit Cost</Label>
                         <Input
                           type="number"
                           value={item.unitCost}
@@ -699,49 +699,22 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Qty</Label>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => updateBudgetItem(item.id, 'quantity', Number(e.target.value))}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>CMS</Label>
-                        <Input
-                          type="number"
-                          value={item.cmsContribution}
-                          onChange={(e) => updateBudgetItem(item.id, 'cmsContribution', Number(e.target.value))}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>NGO</Label>
-                        <Input
-                          type="number"
-                          value={item.ngoContribution}
-                          onChange={(e) => updateBudgetItem(item.id, 'ngoContribution', Number(e.target.value))}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Beneficiary</Label>
-                        <Input
-                          type="number"
-                          value={item.beneficiaryContribution}
-                          onChange={(e) => updateBudgetItem(item.id, 'beneficiaryContribution', Number(e.target.value))}
-                          className="text-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Government</Label>
-                        <Input
-                          type="number"
-                          value={item.governmentContribution}
-                          onChange={(e) => updateBudgetItem(item.id, 'governmentContribution', Number(e.target.value))}
-                          className="text-sm"
-                        />
+                        <Label className="text-xs">Budget Type</Label>
+                        <Select 
+                          value={item.budgetType} 
+                          onValueChange={(value) => updateBudgetItem(item.id, 'budgetType', value)}
+                        >
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getBudgetTypes().map((type, index) => (
+                              <SelectItem key={index} value={type}>
+                                {type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="flex items-end">
                         <Button 
@@ -755,31 +728,53 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                    {/* Contribution Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 border-t pt-4">
                       <div className="space-y-2">
-                        <Label>NGO Contribution</Label>
+                        <Label className="text-xs">CMS Contribution</Label>
+                        <Input
+                          type="number"
+                          value={item.cmsContribution}
+                          onChange={(e) => updateBudgetItem(item.id, 'cmsContribution', Number(e.target.value))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">NGO Contribution</Label>
                         <Input
                           type="number"
                           value={item.ngoContribution}
                           onChange={(e) => updateBudgetItem(item.id, 'ngoContribution', Number(e.target.value))}
+                          className="text-sm"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Beneficiary Contribution</Label>
+                        <Label className="text-xs">Government Contribution</Label>
+                        <Input
+                          type="number"
+                          value={item.governmentContribution}
+                          onChange={(e) => updateBudgetItem(item.id, 'governmentContribution', Number(e.target.value))}
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Beneficiary Contribution</Label>
                         <Input
                           type="number"
                           value={item.beneficiaryContribution}
                           onChange={(e) => updateBudgetItem(item.id, 'beneficiaryContribution', Number(e.target.value))}
+                          className="text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Total Cost</Label>
-                        <Input
-                          type="number"
-                          value={item.totalCost}
-                          disabled
-                          className="bg-muted"
-                        />
+                    </div>
+
+                    {/* Total Cost Display */}
+                    <div className="mt-4 p-3 bg-muted/50 rounded">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Total Cost:</span>
+                        <span className="text-lg font-bold text-primary">
+                          ₹{(item.units * item.unitCost).toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -798,61 +793,267 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
           </div>
         );
 
-      case 5:
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold mb-2">Work Plan & Timeline</h3>
-              <p className="text-muted-foreground">Define monthly targets and work descriptions</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {monthlyTargets.map((target, index) => (
-                <Card key={target.month}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{target.month}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                      <Label>Monthly Target</Label>
-                      <Input
-                        type="number"
-                        value={target.target}
-                        onChange={(e) => {
-                          const updated = [...monthlyTargets];
-                          updated[index].target = Number(e.target.value);
-                          setMonthlyTargets(updated);
-                        }}
-                        placeholder="Target value"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Work Description</Label>
-                      <Textarea
-                        value={target.description}
-                        onChange={(e) => {
-                          const updated = [...monthlyTargets];
-                          updated[index].description = e.target.value;
-                          setMonthlyTargets(updated);
-                        }}
-                        placeholder="Work to be done this month"
-                        className="min-h-[80px]"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 6:
+      case 4: // Budget Allocation Review
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Review & Submit</h3>
-              <p className="text-muted-foreground">Review all project details before submission</p>
+              <h3 className="text-lg font-semibold mb-2">Budget Allocation Review</h3>
+              <p className="text-muted-foreground">Review your budget allocation before proceeding</p>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Budget Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Total Budget Items:</span>
+                    <span>{budgetItems.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Total Allocation:</span>
+                    <span className="text-xl font-bold text-primary">₹{getTotalAllocation().toLocaleString()}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {budgetItems.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Budget Items Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {budgetItems.slice(0, 3).map((item) => (
+                      <div key={item.id} className="flex justify-between items-center p-3 border rounded">
+                        <div>
+                          <p className="font-medium">{item.itemName || "Untitled Item"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.units} units × ₹{item.unitCost.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {item.budgetType.replace(/_/g, ' ').toLowerCase()}
+                          </p>
+                        </div>
+                        <span className="font-bold">₹{(item.units * item.unitCost).toLocaleString()}</span>
+                      </div>
+                    ))}
+                    {budgetItems.length > 3 && (
+                      <p className="text-center text-muted-foreground">
+                        +{budgetItems.length - 3} more items
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
+
+     case 5: // Work Plan & Timeline - SET TARGETS FOR EACH MONTH for each budget item
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-lg font-semibold mb-2">Work Plan & Timeline</h3>
+        <p className="text-muted-foreground">Set monthly targets for each budget item</p>
+      </div>
+
+      {!startDate || !endDate ? (
+        <Card className="bg-muted/50 border-dashed">
+          <CardContent className="p-8 text-center">
+            <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h4 className="font-semibold mb-2">Project Dates Required</h4>
+            <p className="text-muted-foreground">Please set project start and end dates in Basic Information to create work plan</p>
+          </CardContent>
+        </Card>
+      ) : budgetItems.length === 0 ? (
+        <Card className="bg-muted/50 border-dashed">
+          <CardContent className="p-8 text-center">
+            <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h4 className="font-semibold mb-2">No Budget Items</h4>
+            <p className="text-muted-foreground">Please add budget items in the previous step to create work plan</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <div className="border rounded-lg">
+            <div className="overflow-x-auto max-h-[500px]">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-muted/50 z-20">
+                  <tr>
+                    <th className="border p-3 text-left font-semibold sticky left-0 bg-muted/50 z-30 min-w-[250px]">
+                      Budget Items
+                    </th>
+                    {getMonthsBetweenDates().map((month) => (
+                      <th key={month} className="border p-3 text-center font-semibold min-w-[180px]">
+                        {month}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {budgetItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-muted/30">
+                      <td className="border p-3 sticky left-0 bg-background z-10 min-w-[250px]">
+                        <div>
+                          <p className="font-medium text-sm">{item.itemName || `Item ${item.srNo}`}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                          <p className="text-xs text-primary font-medium mt-1">
+                            ₹{(item.units * item.unitCost).toLocaleString()}
+                          </p>
+                        </div>
+                      </td>
+                      {getMonthsBetweenDates().map((month) => {
+                        const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
+                        return (
+                          <td key={month} className="border p-2">
+                            <div className="space-y-2 min-h-[100px]">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Target</Label>
+                                <Input
+                                  type="number"
+                                  value={monthlyTarget.target}
+                                  onChange={(e) => updateMonthlyTarget(item.id, month, 'target', Number(e.target.value))}
+                                  placeholder="0"
+                                  className="text-sm h-8"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Description</Label>
+                                <Textarea
+                                  value={monthlyTarget.description}
+                                  onChange={(e) => updateMonthlyTarget(item.id, month, 'description', e.target.value)}
+                                  placeholder="Work description..."
+                                  className="text-sm min-h-[60px] resize-none"
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Summary Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Work Plan Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                <div className="text-center">
+                  <Label className="text-muted-foreground block">Total Months</Label>
+                  <p className="font-medium text-lg">{getMonthsBetweenDates().length}</p>
+                </div>
+                <div className="text-center">
+                  <Label className="text-muted-foreground block">Budget Items</Label>
+                  <p className="font-medium text-lg">{budgetItems.length}</p>
+                </div>
+                <div className="text-center">
+                  <Label className="text-muted-foreground block">Targets Set</Label>
+                  <p className="font-medium text-lg">
+                    {getTotalTargetsSet()}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <Label className="text-muted-foreground block">Completion</Label>
+                  <p className="font-medium text-lg">
+                    {Math.round((getTotalTargetsSet() / (getMonthsBetweenDates().length * budgetItems.length)) * 100)}%
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+     case 6: // Work Plan Review
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Work Plan Review</h3>
+        <p className="text-muted-foreground">Review your work plan and timeline</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Work Plan Summary</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Project Duration:</span>
+              <span>{getMonthsBetweenDates().length} months</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Budget Items:</span>
+              <span>{budgetItems.length}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Targets Defined:</span>
+              <span>{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {budgetItems.filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0).length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Work Plan Preview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {budgetItems
+                .filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0)
+                .map((item) => (
+                  <div key={item.id} className="p-4 border rounded-lg">
+                    <div className="mb-4">
+                      <p className="font-medium text-lg">{item.itemName || `Item ${item.srNo}`}</p>
+                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {Object.entries(item.monthlyTargets || {})
+                        .filter(([_, target]) => target.target > 0 || target.description.trim() !== '')
+                        .map(([month, target]) => (
+                          <div key={month} className="border rounded p-3 bg-muted/20">
+                            <p className="font-medium text-sm mb-2">{month}</p>
+                            {target.target > 0 && (
+                              <p className="text-sm text-muted-foreground mb-1">
+                                <span className="font-medium">Target:</span> {target.target}
+                              </p>
+                            )}
+                            {target.description.trim() !== '' && (
+                              <p className="text-sm text-muted-foreground">
+                                <span className="font-medium">Description:</span> {target.description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );  case 7: // Overall Review
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Overall Review</h3>
+              <p className="text-muted-foreground">Review all project details before final submission</p>
             </div>
 
             <Card>
@@ -890,6 +1091,18 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
                       }
                     </p>
                   </div>
+                  <div>
+                    <Label className="text-muted-foreground">Project Type</Label>
+                    <p className="font-medium">
+                      {projectData.projectType === 'thematic' ? 'Thematic Project' : 'Integrated Village Development'}
+                    </p>
+                  </div>
+                  {projectData.projectType === 'integrated_village_development' && (
+                    <div>
+                      <Label className="text-muted-foreground">Sub-Projects</Label>
+                      <p className="font-medium">{subProjects.length}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -901,12 +1114,30 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-muted-foreground">Total Budget Categories</Label>
-                    <p className="font-medium text-xl">₹{getTotalBudget().toLocaleString()}</p>
+                    <Label className="text-muted-foreground">Total Budget Items</Label>
+                    <p className="font-medium text-xl">{budgetItems.length}</p>
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Total Budget Allocation</Label>
                     <p className="font-medium text-xl">₹{getTotalAllocation().toLocaleString()}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Work Plan Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground">Project Duration</Label>
+                    <p className="font-medium">{getMonthsBetweenDates().length} months</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Targets Set</Label>
+                    <p className="font-medium">{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -920,7 +1151,7 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
   };
 
   const handleNext = () => {
-    if (currentStep < 5) {
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -931,67 +1162,115 @@ export function ProjectCreationWizard({ open, onOpenChange, onSubmit }: ProjectC
     }
   };
 
-const handleSubmit = () => {
-  const payload = {
-    projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
-    projectHead: projectData.projectHead,
-    projectName: projectData.name,
-    projectTheme: projectData.theme,
-    projectNgoPartner: projectData.ngoPartner,
-    expectedBeneficiaries: projectData.beneficiaries,
-    projectLocation: projectData.location,
-    projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
-    projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
-    projectDescription: projectData.description,
-    projectObjectives: projectData.objectives,
-    budget: {
-      humanResourcesCost: budgetCategories.humanResources,
-      adminCost: budgetCategories.adminCost,
-      managementAndCoordinationCost: budgetCategories.managementCoordination,
-      miscellaneousCost: budgetCategories.miscellaneous,
-      governmentConvergenceCost: budgetCategories.governmentConvergence,
-      totalBudget:
-        budgetCategories.humanResources +
-        budgetCategories.adminCost +
-        budgetCategories.managementCoordination +
-        budgetCategories.miscellaneous +
-        budgetCategories.governmentConvergence,
-    },
-    budgetAllocationMatrix: budgetItems.map((item) => ({
-      srNo: item.serialNo,
-      description: item.description,
-      unit: item.unit,
-      unitCost: item.unitCost,
-      quantity: item.quantity,
-      cmsContri: item.cmsContribution,
-      ngoContri: item.ngoContribution,
-      beneficiaryContri: item.beneficiaryContribution,
-      governmentContri: item.governmentContribution,
-    })),
-    workPlan: {
-      workPlanDetails: monthlyTargets
-        .map((m) => `${m.month}: ${m.description}`)
-        .join(", "),
-    },
-    monthlyTarget: monthlyTargets.reduce((acc, cur) => {
-      acc[cur.month.toLowerCase()] = cur.target;
-      return acc;
-    }, {} as Record<string, number>),
-    projectStatus: "Active",
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const budgetSummary = getBudgetSummary();
+      
+      // Create monthly targets summary
+      const monthlyTargetsSummary: { [key: string]: number } = {};
+      const workPlanDetails: string[] = [];
+
+      budgetItems.forEach(item => {
+        if (item.monthlyTargets) {
+          Object.entries(item.monthlyTargets).forEach(([month, targetData]) => {
+            if (targetData.target > 0) {
+              const monthKey = month.toLowerCase().replace(' ', '_');
+              monthlyTargetsSummary[monthKey] = (monthlyTargetsSummary[monthKey] || 0) + targetData.target;
+            }
+            if (targetData.description.trim() !== '') {
+              workPlanDetails.push(`${month} - ${item.itemName}: ${targetData.description}`);
+            }
+          });
+        }
+      });
+
+      const payload = {
+        projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
+        projectHead: projectData.projectHead,
+        projectName: projectData.name,
+        projectTheme: projectData.theme,
+        projectNgoPartner: projectData.ngoPartner,
+        expectedBeneficiaries: projectData.beneficiaries,
+        projectLocation: projectData.location,
+        projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
+        projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
+        projectDescription: projectData.description,
+        projectObjectives: projectData.objectives,
+        projectdpr: projectData.reportFile?.name || null,
+        projectStatus: "Planned",
+
+        budget: {
+          ...budgetSummary,
+          totalBudget: getTotalAllocation(),
+          totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
+          totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
+          totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
+          totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
+        },
+
+        workPlan: {
+          workPlanDetails: workPlanDetails.join("\n")
+        },
+
+        budgetAllocationItems: budgetItems.map(item => ({
+          srNo: item.srNo.toString(),
+          itemName: item.itemName,
+          description: item.description,
+          units: item.units,
+          unitCost: item.unitCost,
+          cmsContribution: item.cmsContribution,
+          ngoContribution: item.ngoContribution,
+          governmentContribution: item.governmentContribution,
+          beneficiaryContribution: item.beneficiaryContribution,
+          budgetType: item.budgetType,
+          monthlyTargets: item.monthlyTargets || {}
+        })),
+
+        monthlyTargets: monthlyTargetsSummary
+      };
+
+      let response;
+      if (editProjectId) {
+        // Update existing project
+        response = await api.put(`/api/projects/${editProjectId}`, payload);
+      } else {
+        // Create new project
+        response = await api.post("/api/projects", payload);
+      }
+
+      onSubmit(response.data);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error submitting project:", error);
+      // You can add toast notification here
+      alert("Error submitting project. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  onSubmit(payload);  // ✅ send payload back
-  onOpenChange(false); // ✅ close wizard
-};
+  // Function to fetch project by ID (for editing)
+  const fetchProjectById = async (projectId: string) => {
+    try {
+      const response = await api.get(`/api/projects/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      throw error;
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
+          <DialogTitle>
+            {editProjectId ? "Edit Project" : "Create New Project"}
+          </DialogTitle>
         </DialogHeader>
 
-        {/* Progress Steps */}
+        {/* Progress Steps - Same 7 steps */}
         <div className="flex justify-between mb-8">
           {steps.map((step) => (
             <div
@@ -1032,9 +1311,13 @@ const handleSubmit = () => {
             Previous
           </Button>
           
-          {currentStep === 5 ? (
-            <Button onClick={handleSubmit} className="bg-success hover:bg-success/90">
-              Submit Project
+          {currentStep === 7 ? (
+            <Button 
+              onClick={handleSubmit} 
+              className="bg-success hover:bg-success/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Submitting..." : (editProjectId ? "Update Project" : "Submit Project")}
             </Button>
           ) : (
             <Button onClick={handleNext}>
