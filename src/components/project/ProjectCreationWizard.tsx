@@ -652,7 +652,7 @@ export function ProjectCreationWizard({
               {budgetItems.map((item) => (
                 <Card key={item.id}>
                   <CardContent className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-9 gap-2 items-end mb-4">
                       <div className="space-y-2">
                         <Label className="text-xs">S.No</Label>
                         <Input
