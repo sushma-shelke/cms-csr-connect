@@ -33,7 +33,7 @@ const navigationItems = [
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "MIS Reports", url: "/mis-reports", icon: FileText },
   { title: "Financial Tracking", url: "/finance", icon: IndianRupee },
-  { title: "Media Evidence", url: "/media", icon: Camera },
+  // { title: "Media Evidence", url: "/media", icon: Camera },
 ];
 
 const thematicItems = [
@@ -116,20 +116,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mb-9">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/settings" className={getNavClassName("/settings")}>
-                    <Settings className="w-4 h-4" />
-                    {!isCollapsed && <span>Settings</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
