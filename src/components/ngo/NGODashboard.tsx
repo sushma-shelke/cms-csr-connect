@@ -144,10 +144,10 @@ export function NGODashboard() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="submit" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="submit">Submit Update</TabsTrigger>
           <TabsTrigger value="history">Update History</TabsTrigger>
-          <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+          {/* <TabsTrigger value="activity">Recent Activity</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="submit" className="space-y-4">
@@ -158,7 +158,7 @@ export function NGODashboard() {
           <UpdatesList />
         </TabsContent>
 
-        <TabsContent value="activity" className="space-y-4">
+        {/* <TabsContent value="activity" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
@@ -185,7 +185,7 @@ export function NGODashboard() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );
