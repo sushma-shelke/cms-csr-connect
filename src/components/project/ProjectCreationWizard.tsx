@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +54,14 @@ interface SubProject {
   orderIndex: number;
 }
 
+interface NGO {
+  id: number;
+  ngoName: string;
+  location: string;
+  founder: string;
+  // ... other NGO fields as needed
+}
+
 export function ProjectCreationWizard({ 
   open, 
   onOpenChange, 
@@ -65,14 +73,16 @@ export function ProjectCreationWizard({
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [ngos, setNgos] = useState<NGO[]>([]);
+  const [selectedNgoId, setSelectedNgoId] = useState<number | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   // Basic Project Information
   const [projectData, setProjectData] = useState({
     name: "",
     description: "",
     projectType: "thematic" as "thematic" | "integrated_village_development",
     theme: "",
-    ngoPartner: "",
+    ngoPartner: "", // This will now store the NGO name for display
     projectHead: "",
     location: "",
     beneficiaries: "",
@@ -100,12 +110,27 @@ export function ProjectCreationWizard({
   // Sub-projects (for Integrated Village Development Program)
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
 
-  // Load edit data when component opens in edit mode
-  useState(() => {
-    if (open && editProjectId && editProjectData) {
-      loadEditData(editProjectData);
+  // Fetch NGOs when component opens
+  useEffect(() => {
+    if (open) {
+      fetchNgos();
+      
+      // Load edit data if in edit mode
+      if (editProjectId && editProjectData) {
+        loadEditData(editProjectData);
+      }
     }
-  });
+  }, [open, editProjectId, editProjectData]);
+
+  const fetchNgos = async () => {
+    try {
+      const response = await api.get("/api/ngos");
+      setNgos(response.data);
+    } catch (error) {
+      console.error("Error fetching NGOs:", error);
+      // You can add toast notification here
+    }
+  };
 
   const loadEditData = (projectData: any) => {
     // Set basic project data
@@ -121,6 +146,11 @@ export function ProjectCreationWizard({
       objectives: projectData.projectObjectives || "",
       reportFile: null
     });
+
+    // Set selected NGO ID if available
+    if (projectData.ngoId) {
+      setSelectedNgoId(projectData.ngoId);
+    }
 
     // Set dates
     if (projectData.projectStartDate) {
@@ -148,6 +178,20 @@ export function ProjectCreationWizard({
       }));
       setBudgetItems(loadedBudgetItems);
     }
+
+    // Set sub-projects if available for IVDP
+    if (projectData.projectType === "IVDP" && projectData.subProjects) {
+      const loadedSubProjects = projectData.subProjects.map((sub: any, index: number) => ({
+        id: sub.id || Date.now().toString() + index,
+        name: sub.name || "",
+        description: sub.description || "",
+        budget: sub.budget || 0,
+        startDate: sub.startDate ? new Date(sub.startDate) : undefined,
+        endDate: sub.endDate ? new Date(sub.endDate) : undefined,
+        orderIndex: sub.orderIndex || index
+      }));
+      setSubProjects(loadedSubProjects);
+    }
   };
 
   const themes = [
@@ -158,19 +202,9 @@ export function ProjectCreationWizard({
     "Government Convergence"
   ];
 
-  const ngoPartners = [
-    "Health Care Foundation",
-    "Education First NGO",
-    "Green Earth Society",
-    "Rural Livelihood Trust"
-  ];
-
   const projectHeads = [
-    "Dr. Rajesh Kumar - Health Specialist",
-    "Prof. Priya Sharma - Education Expert", 
-    "Mr. Anil Verma - Climate Resilience Lead",
-    "Ms. Sunita Devi - Livelihood Coordinator",
-    "Mr. Vikash Singh - Government Liaison"
+        "Ms. Mala Mirchandani",
+    "Mr. Shiraj Pathan"
   ];
 
   // Budget types based on project type
@@ -345,7 +379,22 @@ export function ProjectCreationWizard({
     return summary;
   };
 
-  // Updated steps - 7 step process (same as before)
+  // Handle NGO selection
+  const handleNgoSelect = (ngoId: string) => {
+    const ngoIdNum = parseInt(ngoId);
+    setSelectedNgoId(ngoIdNum);
+    
+    // Find the selected NGO to set the display name
+    const selectedNgo = ngos.find(ngo => ngo.id === ngoIdNum);
+    if (selectedNgo) {
+      setProjectData({
+        ...projectData,
+        ngoPartner: selectedNgo.ngoName
+      });
+    }
+  };
+
+  // Updated steps - 7 step process
   const steps = [
     { id: 1, title: "Project Type & Head", icon: "🎯" },
     { id: 2, title: "Basic Information", icon: "📋" },
@@ -458,16 +507,26 @@ export function ProjectCreationWizard({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ngoPartner">NGO Partner *</Label>
-                <Select value={projectData.ngoPartner} onValueChange={(value) => setProjectData({...projectData, ngoPartner: value})}>
+                <Select 
+                  value={selectedNgoId?.toString() || ""} 
+                  onValueChange={handleNgoSelect}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select NGO partner" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ngoPartners.map(ngo => (
-                      <SelectItem key={ngo} value={ngo}>{ngo}</SelectItem>
+                    {ngos.map(ngo => (
+                      <SelectItem key={ngo.id} value={ngo.id.toString()}>
+                        {ngo.ngoName}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedNgoId && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {projectData.ngoPartner}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="beneficiaries">Expected Beneficiaries *</Label>
@@ -853,201 +912,204 @@ export function ProjectCreationWizard({
           </div>
         );
 
-     case 5: // Work Plan & Timeline - SET TARGETS FOR EACH MONTH for each budget item
-  return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold mb-2">Work Plan & Timeline</h3>
-        <p className="text-muted-foreground">Set monthly targets for each budget item</p>
-      </div>
+      case 5: // Work Plan & Timeline - SET TARGETS FOR EACH MONTH for each budget item
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold mb-2">Work Plan & Timeline</h3>
+              <p className="text-muted-foreground">Set monthly targets for each budget item</p>
+            </div>
 
-      {!startDate || !endDate ? (
-        <Card className="bg-muted/50 border-dashed">
-          <CardContent className="p-8 text-center">
-            <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h4 className="font-semibold mb-2">Project Dates Required</h4>
-            <p className="text-muted-foreground">Please set project start and end dates in Basic Information to create work plan</p>
-          </CardContent>
-        </Card>
-      ) : budgetItems.length === 0 ? (
-        <Card className="bg-muted/50 border-dashed">
-          <CardContent className="p-8 text-center">
-            <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h4 className="font-semibold mb-2">No Budget Items</h4>
-            <p className="text-muted-foreground">Please add budget items in the previous step to create work plan</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          <div className="border rounded-lg">
-            <div className="overflow-x-auto max-h-[500px]">
-              <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-muted/50 z-20">
-                  <tr>
-                    <th className="border p-3 text-left font-semibold sticky left-0 bg-muted/50 z-30 min-w-[250px]">
-                      Budget Items
-                    </th>
-                    {getMonthsBetweenDates().map((month) => (
-                      <th key={month} className="border p-3 text-center font-semibold min-w-[180px]">
-                        {month}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {budgetItems.map((item) => (
-                    <tr key={item.id} className="hover:bg-muted/30">
-                      <td className="border p-3 sticky left-0 bg-background z-10 min-w-[250px]">
-                        <div>
-                          <p className="font-medium text-sm">{item.itemName || `Item ${item.srNo}`}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
-                          <p className="text-xs text-primary font-medium mt-1">
-                            ₹{(item.units * item.unitCost).toLocaleString()}
-                          </p>
-                        </div>
-                      </td>
-                      {getMonthsBetweenDates().map((month) => {
-                        const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
-                        return (
-                          <td key={month} className="border p-2">
-                            <div className="space-y-2 min-h-[100px]">
-                              <div className="space-y-1">
-                                <Label className="text-xs">Target</Label>
-                                <Input
-                                  type="number"
-                                  value={monthlyTarget.target}
-                                  onChange={(e) => updateMonthlyTarget(item.id, month, 'target', Number(e.target.value))}
-                                  placeholder="0"
-                                  className="text-sm h-8"
-                                />
+            {!startDate || !endDate ? (
+              <Card className="bg-muted/50 border-dashed">
+                <CardContent className="p-8 text-center">
+                  <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h4 className="font-semibold mb-2">Project Dates Required</h4>
+                  <p className="text-muted-foreground">Please set project start and end dates in Basic Information to create work plan</p>
+                </CardContent>
+              </Card>
+            ) : budgetItems.length === 0 ? (
+              <Card className="bg-muted/50 border-dashed">
+                <CardContent className="p-8 text-center">
+                  <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h4 className="font-semibold mb-2">No Budget Items</h4>
+                  <p className="text-muted-foreground">Please add budget items in the previous step to create work plan</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                <div className="border rounded-lg">
+                  <div className="overflow-x-auto max-h-[500px]">
+                    <table className="w-full border-collapse">
+                      <thead className="sticky top-0 bg-muted/50 z-20">
+                        <tr>
+                          <th className="border p-3 text-left font-semibold sticky left-0 bg-muted/50 z-30 min-w-[250px]">
+                            Budget Items
+                          </th>
+                          {getMonthsBetweenDates().map((month) => (
+                            <th key={month} className="border p-3 text-center font-semibold min-w-[180px]">
+                              {month}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {budgetItems.map((item) => (
+                          <tr key={item.id} className="hover:bg-muted/30">
+                            <td className="border p-3 sticky left-0 bg-background z-10 min-w-[250px]">
+                              <div>
+                                <p className="font-medium text-sm">{item.itemName || `Item ${item.srNo}`}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                                <p className="text-xs text-primary font-medium mt-1">
+                                  ₹{(item.units * item.unitCost).toLocaleString()}
+                                </p>
                               </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs">Description</Label>
-                                <Textarea
-                                  value={monthlyTarget.description}
-                                  onChange={(e) => updateMonthlyTarget(item.id, month, 'description', e.target.value)}
-                                  placeholder="Work description..."
-                                  className="text-sm min-h-[60px] resize-none"
-                                />
-                              </div>
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Summary Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Work Plan Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                <div className="text-center">
-                  <Label className="text-muted-foreground block">Total Months</Label>
-                  <p className="font-medium text-lg">{getMonthsBetweenDates().length}</p>
-                </div>
-                <div className="text-center">
-                  <Label className="text-muted-foreground block">Budget Items</Label>
-                  <p className="font-medium text-lg">{budgetItems.length}</p>
-                </div>
-                <div className="text-center">
-                  <Label className="text-muted-foreground block">Targets Set</Label>
-                  <p className="font-medium text-lg">
-                    {getTotalTargetsSet()}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <Label className="text-muted-foreground block">Completion</Label>
-                  <p className="font-medium text-lg">
-                    {Math.round((getTotalTargetsSet() / (getMonthsBetweenDates().length * budgetItems.length)) * 100)}%
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-     case 6: // Work Plan Review
-  return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-2">Work Plan Review</h3>
-        <p className="text-muted-foreground">Review your work plan and timeline</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Work Plan Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Project Duration:</span>
-              <span>{getMonthsBetweenDates().length} months</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Budget Items:</span>
-              <span>{budgetItems.length}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Targets Defined:</span>
-              <span>{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {budgetItems.filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Work Plan Preview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {budgetItems
-                .filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0)
-                .map((item) => (
-                  <div key={item.id} className="p-4 border rounded-lg">
-                    <div className="mb-4">
-                      <p className="font-medium text-lg">{item.itemName || `Item ${item.srNo}`}</p>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {Object.entries(item.monthlyTargets || {})
-                        .filter(([_, target]) => target.target > 0 || target.description.trim() !== '')
-                        .map(([month, target]) => (
-                          <div key={month} className="border rounded p-3 bg-muted/20">
-                            <p className="font-medium text-sm mb-2">{month}</p>
-                            {target.target > 0 && (
-                              <p className="text-sm text-muted-foreground mb-1">
-                                <span className="font-medium">Target:</span> {target.target}
-                              </p>
-                            )}
-                            {target.description.trim() !== '' && (
-                              <p className="text-sm text-muted-foreground">
-                                <span className="font-medium">Description:</span> {target.description}
-                              </p>
-                            )}
-                          </div>
+                            </td>
+                            {getMonthsBetweenDates().map((month) => {
+                              const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
+                              return (
+                                <td key={month} className="border p-2">
+                                  <div className="space-y-2 min-h-[100px]">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Target</Label>
+                                      <Input
+                                        type="number"
+                                        value={monthlyTarget.target}
+                                        onChange={(e) => updateMonthlyTarget(item.id, month, 'target', Number(e.target.value))}
+                                        placeholder="0"
+                                        className="text-sm h-8"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">Description</Label>
+                                      <Textarea
+                                        value={monthlyTarget.description}
+                                        onChange={(e) => updateMonthlyTarget(item.id, month, 'description', e.target.value)}
+                                        placeholder="Work description..."
+                                        className="text-sm min-h-[60px] resize-none"
+                                      />
+                                    </div>
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
                         ))}
-                    </div>
+                      </tbody>
+                    </table>
                   </div>
-                ))}
+                </div>
+
+                {/* Summary Card */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Work Plan Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                      <div className="text-center">
+                        <Label className="text-muted-foreground block">Total Months</Label>
+                        <p className="font-medium text-lg">{getMonthsBetweenDates().length}</p>
+                      </div>
+                      <div className="text-center">
+                        <Label className="text-muted-foreground block">Budget Items</Label>
+                        <p className="font-medium text-lg">{budgetItems.length}</p>
+                      </div>
+                      <div className="text-center">
+                        <Label className="text-muted-foreground block">Targets Set</Label>
+                        <p className="font-medium text-lg">
+                          {getTotalTargetsSet()}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <Label className="text-muted-foreground block">Completion</Label>
+                        <p className="font-medium text-lg">
+                          {Math.round((getTotalTargetsSet() / (getMonthsBetweenDates().length * budgetItems.length)) * 100)}%
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        );
+
+      case 6: // Work Plan Review
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Work Plan Review</h3>
+              <p className="text-muted-foreground">Review your work plan and timeline</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );  case 7: // Overall Review
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Work Plan Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Project Duration:</span>
+                    <span>{getMonthsBetweenDates().length} months</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Budget Items:</span>
+                    <span>{budgetItems.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Targets Defined:</span>
+                    <span>{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {budgetItems.filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Work Plan Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {budgetItems
+                      .filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0)
+                      .map((item) => (
+                        <div key={item.id} className="p-4 border rounded-lg">
+                          <div className="mb-4">
+                            <p className="font-medium text-lg">{item.itemName || `Item ${item.srNo}`}</p>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {Object.entries(item.monthlyTargets || {})
+                              .filter(([_, target]) => target.target > 0 || target.description.trim() !== '')
+                              .map(([month, target]) => (
+                                <div key={month} className="border rounded p-3 bg-muted/20">
+                                  <p className="font-medium text-sm mb-2">{month}</p>
+                                  {target.target > 0 && (
+                                    <p className="text-sm text-muted-foreground mb-1">
+                                      <span className="font-medium">Target:</span> {target.target}
+                                    </p>
+                                  )}
+                                  {target.description.trim() !== '' && (
+                                    <p className="text-sm text-muted-foreground">
+                                      <span className="font-medium">Description:</span> {target.description}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
+
+      case 7: // Overall Review
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -1162,104 +1224,197 @@ export function ProjectCreationWizard({
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      const budgetSummary = getBudgetSummary();
-      
-      // Create monthly targets summary
-      const monthlyTargetsSummary: { [key: string]: number } = {};
-      const workPlanDetails: string[] = [];
+// Add this function to handle file upload
+const uploadDocument = async (file: File): Promise<string | null> => {
+  try {
+    const formData = new FormData();
+    formData.append('files', file);
+    
+    const response = await api.post('/upload/documents', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
+      return response.data.uploadedUrls[0];
+    }
+    return null;
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    return null;
+  }
+};
 
-      budgetItems.forEach(item => {
-        if (item.monthlyTargets) {
-          Object.entries(item.monthlyTargets).forEach(([month, targetData]) => {
-            if (targetData.target > 0) {
-              const monthKey = month.toLowerCase().replace(' ', '_');
-              monthlyTargetsSummary[monthKey] = (monthlyTargetsSummary[monthKey] || 0) + targetData.target;
-            }
-            if (targetData.description.trim() !== '') {
-              workPlanDetails.push(`${month} - ${item.itemName}: ${targetData.description}`);
-            }
-          });
+// Update the handleSubmit function to fix these issues
+const handleSubmit = async () => {
+  if (!selectedNgoId) {
+    alert("Please select an NGO partner");
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    // Upload document if exists
+    let uploadedDprUrl = null;
+    if (projectData.reportFile) {
+      uploadedDprUrl = await uploadDocument(projectData.reportFile);
+      if (!uploadedDprUrl) {
+        alert("❌ Failed to upload project report. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    const budgetSummary = getBudgetSummary();
+    
+    // Create work plan details
+    const workPlanDetails: string[] = [];
+
+    // Format budget allocation items with monthly targets
+    const budgetAllocationItems = budgetItems.map(item => {
+      const itemMonthlyTargets = getMonthsBetweenDates().map(month => {
+        const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
+        const targetMonth = new Date(month);
+        
+        // Add to work plan details if there's a description
+        if (monthlyTarget.description.trim() !== '') {
+          workPlanDetails.push(`${month} - ${item.itemName}: ${monthlyTarget.description}`);
         }
+        
+        return {
+          targetMonth: format(targetMonth, "yyyy-MM-dd"),
+          plannedTarget: monthlyTarget.target || 0,
+          targetDescription: monthlyTarget.description.trim() || `No specific target set for ${month.split(' ')[0].toUpperCase()} ${month.split(' ')[1]}`,
+          achievedTarget: 0,
+          deviation: 0,
+          achievementPercentage: 0.0
+        };
       });
 
-      const payload = {
-        projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
-        projectHead: projectData.projectHead,
-        projectName: projectData.name,
-        projectTheme: projectData.theme,
-        projectNgoPartner: projectData.ngoPartner,
-        expectedBeneficiaries: projectData.beneficiaries,
-        projectLocation: projectData.location,
-        projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
-        projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
-        projectDescription: projectData.description,
-        projectObjectives: projectData.objectives,
-        projectdpr: projectData.reportFile?.name || null,
-        projectStatus: "Planned",
-
-        budget: {
-          ...budgetSummary,
-          totalBudget: getTotalAllocation(),
-          totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
-          totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
-          totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
-          totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
-        },
-
-        workPlan: {
-          workPlanDetails: workPlanDetails.join("\n")
-        },
-
-        budgetAllocationItems: budgetItems.map(item => ({
-          srNo: item.srNo.toString(),
-          itemName: item.itemName,
-          description: item.description,
-          units: item.units,
-          unitCost: item.unitCost,
-          cmsContribution: item.cmsContribution,
-          ngoContribution: item.ngoContribution,
-          governmentContribution: item.governmentContribution,
-          beneficiaryContribution: item.beneficiaryContribution,
-          budgetType: item.budgetType,
-          monthlyTargets: item.monthlyTargets || {}
-        })),
-
-        monthlyTargets: monthlyTargetsSummary
+      return {
+        srNo: item.srNo.toString(),
+        itemName: item.itemName,
+        description: item.description,
+        units: item.units,
+        unitCost: item.unitCost,
+        total: item.units * item.unitCost,
+        cmsContribution: item.cmsContribution,
+        ngoContribution: item.ngoContribution,
+        governmentContribution: item.governmentContribution,
+        beneficiaryContribution: item.beneficiaryContribution,
+        budgetType: item.budgetType,
+        monthlyTargets: itemMonthlyTargets
       };
+    });
 
-      let response;
-      if (editProjectId) {
-        // Update existing project
-        response = await api.put(`/api/projects/${editProjectId}`, payload);
-      } else {
-        // Create new project
-        response = await api.post("/api/projects", payload);
-      }
+    // Extract filename from uploaded URL or use existing filename
+    const projectDprFilename = uploadedDprUrl ? uploadedDprUrl.split('/').pop() : null;
 
-      onSubmit(response.data);
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Error submitting project:", error);
-      // You can add toast notification here
-      alert("Error submitting project. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    const payload = {
+      projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
+      projectHead: projectData.projectHead,
+      projectName: projectData.name,
+      projectTheme: projectData.theme,
+      ngoId: selectedNgoId, // Make sure NGO ID is included
+      projectNgoPartnerName: projectData.ngoPartner,
+      expectedBeneficiaries: projectData.beneficiaries,
+      projectLocation: projectData.location,
+      projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
+      projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
+      projectDescription: projectData.description,
+      projectObjectives: projectData.objectives,
+      projectdpr: projectDprFilename,
+      projectStatus: "Planned",
+
+      budget: {
+        procurementCost: budgetSummary.procurementCost || 0,
+        trainingCost: budgetSummary.trainingCost || 0,
+        civilConstructionCost: budgetSummary.civilConstructionCost || 0,
+        contingencyMiscellaneousCost: budgetSummary.miscellaneousCost || 0,
+        humanResourcesCost: budgetSummary.humanResourcesCost || 0,
+        adminCost: budgetSummary.adminCost || 0,
+        managementAndCoordinationCost: budgetSummary.managementAndCoordinationCost || 0,
+        governmentConvergenceCost: budgetSummary.governmentConvergenceCost || 0,
+        totalBudget: getTotalAllocation(),
+        totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
+        totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
+        totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
+        totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
+      },
+
+      workPlan: {
+        workPlanDetails: workPlanDetails.join("\n")
+      },
+
+      budgetAllocationItems: budgetAllocationItems,
+
+      // Remove the root monthlyTargets array to avoid duplication
+      // monthlyTargets: monthlyTargets,
+
+      ...(projectData.projectType === 'integrated_village_development' && {
+        subProjects: subProjects.map((sub, index) => ({
+          id: sub.id,
+          name: sub.name,
+          description: sub.description,
+          budget: sub.budget,
+          startDate: sub.startDate ? format(sub.startDate, "yyyy-MM-dd") : null,
+          endDate: sub.endDate ? format(sub.endDate, "yyyy-MM-dd") : null,
+          orderIndex: index
+        }))
+      })
+    };
+
+    // Log the payload for debugging
+    console.log("📤 Submitting Project Payload:", JSON.stringify(payload, null, 2));
+
+    let response;
+    if (editProjectId) {
+      console.log(`🔄 Updating existing project with ID: ${editProjectId}`);
+      response = await api.put(`/api/projects/${editProjectId}`, payload);
+    } else {
+      console.log("🆕 Creating new project");
+      response = await api.post("/api/projects", payload);
     }
-  };
 
-  // Function to fetch project by ID (for editing)
-  const fetchProjectById = async (projectId: string) => {
-    try {
-      const response = await api.get(`/api/projects/${projectId}`);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching project:", error);
-      throw error;
+    // Log the response for debugging
+    console.log("✅ Project API Response:", JSON.stringify(response.data, null, 2));
+
+    // Verify if monthly targets were saved correctly
+    const savedTargets = response.data.budgetAllocationItems?.flatMap((item: any) => 
+      item.monthlyTargets?.filter((target: any) => target.plannedTarget > 0)
+    ) || [];
+    
+    if (savedTargets.length > 0) {
+      console.log("🎯 Monthly targets saved successfully:", savedTargets.length, "targets with values > 0");
+    } else {
+      console.warn("⚠️ No monthly targets with values > 0 were saved. Check API implementation.");
     }
-  };
+
+    // Show success alert
+    alert(`✅ ${editProjectId ? "Project updated" : "Project created"} successfully!`);
+
+    // Call the onSubmit callback with the response data
+    onSubmit(response.data);
+
+  } catch (error: any) {
+    console.error("❌ Error submitting project:", error);
+    
+    if (error.response) {
+      console.error("🚨 API Error Response:", error.response.data);
+      console.error("🚨 API Error Status:", error.response.status);
+      alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.response.data.message || 'Server error'}`);
+    } else if (error.request) {
+      console.error("🚨 Network Error:", error.request);
+      alert("❌ Network error. Please check your connection and try again.");
+    } else {
+      console.error("🚨 Error:", error.message);
+      alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.message}`);
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1270,7 +1425,7 @@ export function ProjectCreationWizard({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Progress Steps - Same 7 steps */}
+        {/* Progress Steps */}
         <div className="flex justify-between mb-8">
           {steps.map((step) => (
             <div
@@ -1312,19 +1467,21 @@ export function ProjectCreationWizard({
           </Button>
           
           {currentStep === 7 ? (
-            <Button 
-              onClick={handleSubmit} 
-              className="bg-success hover:bg-success/90"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : (editProjectId ? "Update Project" : "Submit Project")}
-            </Button>
-          ) : (
-            <Button onClick={handleNext}>
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+  <Button 
+    onClick={handleSubmit} 
+    className="bg-success hover:bg-success/90"
+    disabled={isSubmitting || isSubmitted}
+  >
+    {isSubmitting ? "Submitting..." : 
+     isSubmitted ? "✅ Success!" : 
+     (editProjectId ? "Update Project" : "Submit Project")}
+  </Button>
+) : (
+  <Button onClick={handleNext}>
+    Next
+    <ArrowRight className="h-4 w-4 ml-2" />
+  </Button>
+)}
         </div>
       </DialogContent>
     </Dialog>
