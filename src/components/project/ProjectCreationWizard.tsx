@@ -10,9 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Plus, Trash2, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, ArrowLeft, ArrowRight, CheckCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import api from "../../api/axios";
+
+interface MonthlyTargetItem {
+  budgetAllocationItemSrNo: string;
+  targetMonth: string;
+  plannedTarget: number;
+  targetDescription: string;
+}
 
 interface ProjectCreationWizardProps {
   open: boolean;
@@ -76,6 +83,7 @@ export function ProjectCreationWizard({
   const [ngos, setNgos] = useState<NGO[]>([]);
   const [selectedNgoId, setSelectedNgoId] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  
   // Basic Project Information
   const [projectData, setProjectData] = useState({
     name: "",
@@ -109,7 +117,51 @@ export function ProjectCreationWizard({
 
   // Sub-projects (for Integrated Village Development Program)
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
+// Add this function inside your component, after the state declarations
+const resetForm = () => {
+  setCurrentStep(1);
+  setStartDate(undefined);
+  setEndDate(undefined);
+  setSelectedNgoId(null);
+  setIsSubmitted(false);
+  
+  // Reset project data
+  setProjectData({
+    name: "",
+    description: "",
+    projectType: "thematic",
+    theme: "",
+    ngoPartner: "",
+    projectHead: "",
+    location: "",
+    beneficiaries: "",
+    objectives: "",
+    reportFile: null
+  });
 
+  // Reset budget items to initial state
+  setBudgetItems([
+    {
+      id: "1",
+      srNo: 1,
+      itemName: "",
+      description: "",
+      units: 0,
+      unitCost: 0,
+      cmsContribution: 0,
+      ngoContribution: 0,
+      beneficiaryContribution: 0,
+      governmentContribution: 0,
+      budgetType: "PROCUREMENT_COST"
+    }
+  ]);
+
+  // Reset sub-projects
+  setSubProjects([]);
+  
+  // Reset submission state
+  setIsSubmitting(false);
+};
   // Fetch NGOs when component opens
   useEffect(() => {
     if (open) {
@@ -203,7 +255,7 @@ export function ProjectCreationWizard({
   ];
 
   const projectHeads = [
-        "Ms. Mala Mirchandani",
+    "Ms. Mala Mirchandani",
     "Mr. Shiraj Pathan"
   ];
 
@@ -241,12 +293,28 @@ export function ProjectCreationWizard({
     const start = new Date(startDate);
     const end = new Date(endDate);
     
+    // Reset to first day of month for consistent monthly targets
+    start.setDate(1);
+    end.setDate(1);
+    
     while (start <= end) {
       months.push(format(start, "MMMM yyyy"));
       start.setMonth(start.getMonth() + 1);
     }
     
     return months;
+  };
+
+  const getProjectDurationInfo = () => {
+    if (!startDate || !endDate) return null;
+    
+    const months = getMonthsBetweenDates();
+    return {
+      months: months,
+      monthCount: months.length,
+      start: format(startDate, "MMM d, yyyy"),
+      end: format(endDate, "MMM d, yyyy")
+    };
   };
 
   const addBudgetItem = () => {
@@ -343,7 +411,8 @@ export function ProjectCreationWizard({
       governmentConvergenceCost: 0,
       procurementCost: 0,
       civilConstructionCost: 0,
-      trainingCost: 0
+      trainingCost: 0,
+      investmentCost: 0 // Added for IVDP projects
     };
 
     budgetItems.forEach(item => {
@@ -372,6 +441,9 @@ export function ProjectCreationWizard({
           break;
         case "TRAINING_COST":
           summary.trainingCost += totalCost;
+          break;
+        case "INVESTMENT_COST":
+          summary.investmentCost += totalCost;
           break;
       }
     });
@@ -913,6 +985,8 @@ export function ProjectCreationWizard({
         );
 
       case 5: // Work Plan & Timeline - SET TARGETS FOR EACH MONTH for each budget item
+        const durationInfo = getProjectDurationInfo();
+        
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -938,6 +1012,28 @@ export function ProjectCreationWizard({
               </Card>
             ) : (
               <div className="space-y-6">
+                {/* Project Timeline Information Card */}
+                {durationInfo && (
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-start space-x-3">
+                        <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="font-semibold text-blue-800 mb-1">Project Timeline Information</h4>
+                          <p className="text-sm text-blue-700 mb-2">
+                            Your project runs from <strong>{durationInfo.start}</strong> to <strong>{durationInfo.end}</strong>, 
+                            spanning <strong>{durationInfo.monthCount} months</strong> ({durationInfo.months.join(', ')}).
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            💡 <strong>Note:</strong> The system will automatically create monthly targets for all {durationInfo.monthCount} months 
+                            to ensure complete project tracking. Set targets to 0 for months with no planned activities.
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="border rounded-lg">
                   <div className="overflow-x-auto max-h-[500px]">
                     <table className="w-full border-collapse">
@@ -985,7 +1081,7 @@ export function ProjectCreationWizard({
                                       <Textarea
                                         value={monthlyTarget.description}
                                         onChange={(e) => updateMonthlyTarget(item.id, month, 'description', e.target.value)}
-                                        placeholder="Work description..."
+                                        placeholder={`Work description for ${month}...`}
                                         className="text-sm min-h-[60px] resize-none"
                                       />
                                     </div>
@@ -1022,9 +1118,9 @@ export function ProjectCreationWizard({
                         </p>
                       </div>
                       <div className="text-center">
-                        <Label className="text-muted-foreground block">Completion</Label>
+                        <Label className="text-muted-foreground block">Total Targets</Label>
                         <p className="font-medium text-lg">
-                          {Math.round((getTotalTargetsSet() / (getMonthsBetweenDates().length * budgetItems.length)) * 100)}%
+                          {getMonthsBetweenDates().length * budgetItems.length}
                         </p>
                       </div>
                     </div>
@@ -1036,6 +1132,8 @@ export function ProjectCreationWizard({
         );
 
       case 6: // Work Plan Review
+        const workPlanDurationInfo = getProjectDurationInfo();
+        
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -1043,6 +1141,26 @@ export function ProjectCreationWizard({
               <h3 className="text-lg font-semibold mb-2">Work Plan Review</h3>
               <p className="text-muted-foreground">Review your work plan and timeline</p>
             </div>
+
+            {workPlanDurationInfo && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-blue-800">Project Timeline</h4>
+                      <p className="text-sm text-blue-700">
+                        {workPlanDurationInfo.start} to {workPlanDurationInfo.end} 
+                        ({workPlanDurationInfo.monthCount} months)
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-blue-800">Months:</p>
+                      <p className="text-sm text-blue-700">{workPlanDurationInfo.months.join(', ')}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
@@ -1073,35 +1191,30 @@ export function ProjectCreationWizard({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {budgetItems
-                      .filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0)
-                      .map((item) => (
-                        <div key={item.id} className="p-4 border rounded-lg">
-                          <div className="mb-4">
-                            <p className="font-medium text-lg">{item.itemName || `Item ${item.srNo}`}</p>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {Object.entries(item.monthlyTargets || {})
-                              .filter(([_, target]) => target.target > 0 || target.description.trim() !== '')
-                              .map(([month, target]) => (
-                                <div key={month} className="border rounded p-3 bg-muted/20">
-                                  <p className="font-medium text-sm mb-2">{month}</p>
-                                  {target.target > 0 && (
-                                    <p className="text-sm text-muted-foreground mb-1">
-                                      <span className="font-medium">Target:</span> {target.target}
-                                    </p>
-                                  )}
-                                  {target.description.trim() !== '' && (
-                                    <p className="text-sm text-muted-foreground">
-                                      <span className="font-medium">Description:</span> {target.description}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                          </div>
+                    {budgetItems.map((item) => (
+                      <div key={item.id} className="p-4 border rounded-lg">
+                        <div className="mb-4">
+                          <p className="font-medium text-lg">{item.itemName || `Item ${item.srNo}`}</p>
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
                         </div>
-                      ))}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {getMonthsBetweenDates().map((month) => {
+                            const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
+                            return (
+                              <div key={month} className="border rounded p-3 bg-muted/20">
+                                <p className="font-medium text-sm mb-2">{month}</p>
+                                <p className="text-sm text-muted-foreground mb-1">
+                                  <span className="font-medium">Target:</span> {monthlyTarget.target}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="font-medium">Description:</span> {monthlyTarget.description || 'No description'}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -1110,6 +1223,8 @@ export function ProjectCreationWizard({
         );
 
       case 7: // Overall Review
+        const reviewDurationInfo = getProjectDurationInfo();
+        
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
@@ -1166,6 +1281,15 @@ export function ProjectCreationWizard({
                     </div>
                   )}
                 </div>
+                {reviewDurationInfo && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                    <p className="text-sm font-medium text-blue-800">Project Timeline:</p>
+                    <p className="text-sm text-blue-700">
+                      {reviewDurationInfo.start} to {reviewDurationInfo.end} 
+                      ({reviewDurationInfo.monthCount} months: {reviewDurationInfo.months.join(', ')})
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -1224,197 +1348,218 @@ export function ProjectCreationWizard({
     }
   };
 
-// Add this function to handle file upload
-const uploadDocument = async (file: File): Promise<string | null> => {
-  try {
-    const formData = new FormData();
-    formData.append('files', file);
-    
-    const response = await api.post('/upload/documents', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    
-    if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
-      return response.data.uploadedUrls[0];
-    }
-    return null;
-  } catch (error) {
-    console.error('Error uploading document:', error);
-    return null;
-  }
-};
-
-// Update the handleSubmit function to fix these issues
-const handleSubmit = async () => {
-  if (!selectedNgoId) {
-    alert("Please select an NGO partner");
-    return;
-  }
-
-  setIsSubmitting(true);
-  try {
-    // Upload document if exists
-    let uploadedDprUrl = null;
-    if (projectData.reportFile) {
-      uploadedDprUrl = await uploadDocument(projectData.reportFile);
-      if (!uploadedDprUrl) {
-        alert("❌ Failed to upload project report. Please try again.");
-        setIsSubmitting(false);
-        return;
+  // Add this function to handle file upload
+  const uploadDocument = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('files', file);
+      
+      const response = await api.post('/upload/documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
+        return response.data.uploadedUrls[0]; // Return the full URL
       }
+      return null;
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      return null;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedNgoId) {
+      alert("Please select an NGO partner");
+      return;
     }
 
-    const budgetSummary = getBudgetSummary();
-    
-    // Create work plan details
-    const workPlanDetails: string[] = [];
-
-    // Format budget allocation items with monthly targets
-    const budgetAllocationItems = budgetItems.map(item => {
-      const itemMonthlyTargets = getMonthsBetweenDates().map(month => {
-        const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
-        const targetMonth = new Date(month);
-        
-        // Add to work plan details if there's a description
-        if (monthlyTarget.description.trim() !== '') {
-          workPlanDetails.push(`${month} - ${item.itemName}: ${monthlyTarget.description}`);
+    setIsSubmitting(true);
+    try {
+      // Upload document if exists and get the FULL URL
+      let uploadedDprUrl = null;
+      if (projectData.reportFile) {
+        uploadedDprUrl = await uploadDocument(projectData.reportFile);
+        if (!uploadedDprUrl) {
+          alert("❌ Failed to upload project report. Please try again.");
+          setIsSubmitting(false);
+          return;
         }
-        
+        console.log("📄 Document uploaded successfully:", uploadedDprUrl);
+      }
+
+      const budgetSummary = getBudgetSummary();
+      
+      // Create work plan details
+      const workPlanDetails: string[] = [];
+
+      // Create monthlyTargetItems array (SEPARATE from budget items)
+      const monthlyTargetItems: MonthlyTargetItem[] = [];
+
+      // Format budget allocation items WITHOUT monthly targets
+      const budgetAllocationItems = budgetItems.map(item => {
+        // Process monthly targets for this item and add to separate array
+        getMonthsBetweenDates().forEach(month => {
+          const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
+          
+          // Only include targets with values or descriptions
+          if (monthlyTarget.target > 0 || monthlyTarget.description.trim() !== '') {
+            const targetMonth = new Date(month);
+            
+            // Add to work plan details
+            if (monthlyTarget.description.trim() !== '') {
+              workPlanDetails.push(`${month} - ${item.itemName}: ${monthlyTarget.description}`);
+            }
+            
+            // Add to monthlyTargetItems array
+            monthlyTargetItems.push({
+              budgetAllocationItemSrNo: item.srNo.toString(), // Reference by serial number
+              targetMonth: format(targetMonth, "yyyy-MM-dd"),
+              plannedTarget: monthlyTarget.target || 0,
+              targetDescription: monthlyTarget.description.trim() || `No specific target set for ${month.split(' ')[0].toUpperCase()} ${month.split(' ')[1]}`
+            });
+          }
+        });
+
         return {
-          targetMonth: format(targetMonth, "yyyy-MM-dd"),
-          plannedTarget: monthlyTarget.target || 0,
-          targetDescription: monthlyTarget.description.trim() || `No specific target set for ${month.split(' ')[0].toUpperCase()} ${month.split(' ')[1]}`,
-          achievedTarget: 0,
-          deviation: 0,
-          achievementPercentage: 0.0
+          srNo: item.srNo.toString(),
+          itemName: item.itemName,
+          description: item.description,
+          units: item.units,
+          unitCost: item.unitCost,
+          total: item.units * item.unitCost,
+          cmsContribution: item.cmsContribution,
+          ngoContribution: item.ngoContribution,
+          governmentContribution: item.governmentContribution,
+          beneficiaryContribution: item.beneficiaryContribution,
+          budgetType: item.budgetType
+          // REMOVED: monthlyTargets from here
         };
       });
 
-      return {
-        srNo: item.srNo.toString(),
-        itemName: item.itemName,
-        description: item.description,
-        units: item.units,
-        unitCost: item.unitCost,
-        total: item.units * item.unitCost,
-        cmsContribution: item.cmsContribution,
-        ngoContribution: item.ngoContribution,
-        governmentContribution: item.governmentContribution,
-        beneficiaryContribution: item.beneficiaryContribution,
-        budgetType: item.budgetType,
-        monthlyTargets: itemMonthlyTargets
+      // Use the FULL uploaded URL instead of just filename
+      const projectDprValue = uploadedDprUrl; // This is the full URL like "https://lakhpatididi.in/cmsmis/documents/..."
+
+      const payload = {
+        projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
+        projectHead: projectData.projectHead,
+        projectName: projectData.name,
+        projectTheme: projectData.theme,
+        ngoId: selectedNgoId,
+        projectNgoPartnerName: projectData.ngoPartner,
+        expectedBeneficiaries: projectData.beneficiaries,
+        projectLocation: projectData.location,
+        projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
+        projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
+        projectDescription: projectData.description,
+        projectObjectives: projectData.objectives,
+        projectdpr: projectDprValue, // Use the full URL here
+        projectStatus: "Planned",
+        projectManagerId: 1,
+
+        budget: {
+          procurementCost: budgetSummary.procurementCost || 0,
+          trainingCost: budgetSummary.trainingCost || 0,
+          civilConstructionCost: budgetSummary.civilConstructionCost || 0,
+          contingencyMiscellaneousCost: budgetSummary.miscellaneousCost || 0,
+          humanResourcesCost: budgetSummary.humanResourcesCost || 0,
+          adminCost: budgetSummary.adminCost || 0,
+          managementAndCoordinationCost: budgetSummary.managementAndCoordinationCost || 0,
+          governmentConvergenceCost: budgetSummary.governmentConvergenceCost || 0,
+          ...(projectData.projectType === 'integrated_village_development' && {
+            investmentCost: budgetSummary.investmentCost || 0
+          }),
+          totalBudget: getTotalAllocation(),
+          totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
+          totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
+          totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
+          totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
+        },
+
+        workPlan: {
+          workPlanDetails: workPlanDetails.join("\n")
+        },
+
+        budgetAllocationItems: budgetAllocationItems,
+
+        // ADD THIS: Separate monthly targets array
+        monthlyTargetItems: monthlyTargetItems,
+
+        ...(projectData.projectType === 'integrated_village_development' && {
+          subProjects: subProjects.map((sub, index) => ({
+            id: sub.id,
+            name: sub.name,
+            description: sub.description,
+            budget: sub.budget,
+            startDate: sub.startDate ? format(sub.startDate, "yyyy-MM-dd") : null,
+            endDate: sub.endDate ? format(sub.endDate, "yyyy-MM-dd") : null,
+            orderIndex: index
+          }))
+        })
       };
-    });
 
-    // Extract filename from uploaded URL or use existing filename
-    const projectDprFilename = uploadedDprUrl ? uploadedDprUrl.split('/').pop() : null;
+      // Log the payload for debugging
+      console.log("📤 Submitting Project Payload:", JSON.stringify(payload, null, 2));
+      console.log("📊 Monthly Targets Count:", monthlyTargetItems.length);
+      console.log("📄 Project DPR URL:", projectDprValue);
 
-    const payload = {
-      projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
-      projectHead: projectData.projectHead,
-      projectName: projectData.name,
-      projectTheme: projectData.theme,
-      ngoId: selectedNgoId, // Make sure NGO ID is included
-      projectNgoPartnerName: projectData.ngoPartner,
-      expectedBeneficiaries: projectData.beneficiaries,
-      projectLocation: projectData.location,
-      projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
-      projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
-      projectDescription: projectData.description,
-      projectObjectives: projectData.objectives,
-      projectdpr: projectDprFilename,
-      projectStatus: "Planned",
+      let response;
+      if (editProjectId) {
+        console.log(`🔄 Updating existing project with ID: ${editProjectId}`);
+        response = await api.put(`/api/projects/${editProjectId}`, payload);
+      } else {
+        console.log("🆕 Creating new project");
+        response = await api.post("/api/projects", payload);
+      }
 
-      budget: {
-        procurementCost: budgetSummary.procurementCost || 0,
-        trainingCost: budgetSummary.trainingCost || 0,
-        civilConstructionCost: budgetSummary.civilConstructionCost || 0,
-        contingencyMiscellaneousCost: budgetSummary.miscellaneousCost || 0,
-        humanResourcesCost: budgetSummary.humanResourcesCost || 0,
-        adminCost: budgetSummary.adminCost || 0,
-        managementAndCoordinationCost: budgetSummary.managementAndCoordinationCost || 0,
-        governmentConvergenceCost: budgetSummary.governmentConvergenceCost || 0,
-        totalBudget: getTotalAllocation(),
-        totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
-        totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
-        totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
-        totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
-      },
+      // Log the response for debugging
+      console.log("✅ Project API Response:", JSON.stringify(response.data, null, 2));
 
-      workPlan: {
-        workPlanDetails: workPlanDetails.join("\n")
-      },
+      // FIXED: Properly verify monthly targets from nested structure
+      const savedTargets = response.data.budgetAllocationItems?.flatMap(
+        (item: any) => item.monthlyTargets || []
+      ) || [];
 
-      budgetAllocationItems: budgetAllocationItems,
+      if (savedTargets.length > 0) {
+        console.log("🎯 Monthly targets saved successfully:", savedTargets.length, "targets");
+      } else {
+        console.warn("⚠️ No monthly targets were saved in the response.");
+      }
 
-      // Remove the root monthlyTargets array to avoid duplication
-      // monthlyTargets: monthlyTargets,
+      // Show success alert
+      alert(`✅ ${editProjectId ? "Project updated" : "Project created"} successfully!`);
+      setIsSubmitted(true);
 
-      ...(projectData.projectType === 'integrated_village_development' && {
-        subProjects: subProjects.map((sub, index) => ({
-          id: sub.id,
-          name: sub.name,
-          description: sub.description,
-          budget: sub.budget,
-          startDate: sub.startDate ? format(sub.startDate, "yyyy-MM-dd") : null,
-          endDate: sub.endDate ? format(sub.endDate, "yyyy-MM-dd") : null,
-          orderIndex: index
-        }))
-      })
-    };
+      // Call the onSubmit callback with the response data
+      onSubmit(response.data);
 
-    // Log the payload for debugging
-    console.log("📤 Submitting Project Payload:", JSON.stringify(payload, null, 2));
-
-    let response;
-    if (editProjectId) {
-      console.log(`🔄 Updating existing project with ID: ${editProjectId}`);
-      response = await api.put(`/api/projects/${editProjectId}`, payload);
-    } else {
-      console.log("🆕 Creating new project");
-      response = await api.post("/api/projects", payload);
+    } catch (error: any) {
+      console.error("❌ Error submitting project:", error);
+      
+      if (error.response) {
+        console.error("🚨 API Error Response:", error.response.data);
+        console.error("🚨 API Error Status:", error.response.status);
+        console.error("🚨 API Error Headers:", error.response.headers);
+        
+        // Try to get more detailed error message
+        const errorMessage = error.response.data.message || 
+                            error.response.data.error || 
+                            JSON.stringify(error.response.data);
+        
+        alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${errorMessage}`);
+      } else if (error.request) {
+        console.error("🚨 Network Error:", error.request);
+        alert("❌ Network error. Please check your connection and try again.");
+      } else {
+        console.error("🚨 Error:", error.message);
+        alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.message}`);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Log the response for debugging
-    console.log("✅ Project API Response:", JSON.stringify(response.data, null, 2));
-
-    // Verify if monthly targets were saved correctly
-    const savedTargets = response.data.budgetAllocationItems?.flatMap((item: any) => 
-      item.monthlyTargets?.filter((target: any) => target.plannedTarget > 0)
-    ) || [];
-    
-    if (savedTargets.length > 0) {
-      console.log("🎯 Monthly targets saved successfully:", savedTargets.length, "targets with values > 0");
-    } else {
-      console.warn("⚠️ No monthly targets with values > 0 were saved. Check API implementation.");
-    }
-
-    // Show success alert
-    alert(`✅ ${editProjectId ? "Project updated" : "Project created"} successfully!`);
-
-    // Call the onSubmit callback with the response data
-    onSubmit(response.data);
-
-  } catch (error: any) {
-    console.error("❌ Error submitting project:", error);
-    
-    if (error.response) {
-      console.error("🚨 API Error Response:", error.response.data);
-      console.error("🚨 API Error Status:", error.response.status);
-      alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.response.data.message || 'Server error'}`);
-    } else if (error.request) {
-      console.error("🚨 Network Error:", error.request);
-      alert("❌ Network error. Please check your connection and try again.");
-    } else {
-      console.error("🚨 Error:", error.message);
-      alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.message}`);
-    }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1467,21 +1612,21 @@ const handleSubmit = async () => {
           </Button>
           
           {currentStep === 7 ? (
-  <Button 
-    onClick={handleSubmit} 
-    className="bg-success hover:bg-success/90"
-    disabled={isSubmitting || isSubmitted}
-  >
-    {isSubmitting ? "Submitting..." : 
-     isSubmitted ? "✅ Success!" : 
-     (editProjectId ? "Update Project" : "Submit Project")}
-  </Button>
-) : (
-  <Button onClick={handleNext}>
-    Next
-    <ArrowRight className="h-4 w-4 ml-2" />
-  </Button>
-)}
+            <Button 
+              onClick={handleSubmit} 
+              className="bg-success hover:bg-success/90"
+              disabled={isSubmitting || isSubmitted}
+            >
+              {isSubmitting ? "Submitting..." : 
+              isSubmitted ? "✅ Success!" : 
+              (editProjectId ? "Update Project" : "Submit Project")}
+            </Button>
+          ) : (
+            <Button onClick={handleNext}>
+              Next
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
