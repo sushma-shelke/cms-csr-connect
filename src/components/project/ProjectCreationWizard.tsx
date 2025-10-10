@@ -66,7 +66,6 @@ interface NGO {
   ngoName: string;
   location: string;
   founder: string;
-  // ... other NGO fields as needed
 }
 
 export function ProjectCreationWizard({ 
@@ -90,7 +89,7 @@ export function ProjectCreationWizard({
     description: "",
     projectType: "thematic" as "thematic" | "integrated_village_development",
     theme: "",
-    ngoPartner: "", // This will now store the NGO name for display
+    ngoPartner: "",
     projectHead: "",
     location: "",
     beneficiaries: "",
@@ -117,59 +116,85 @@ export function ProjectCreationWizard({
 
   // Sub-projects (for Integrated Village Development Program)
   const [subProjects, setSubProjects] = useState<SubProject[]>([]);
-// Add this function inside your component, after the state declarations
-const resetForm = () => {
-  setCurrentStep(1);
-  setStartDate(undefined);
-  setEndDate(undefined);
-  setSelectedNgoId(null);
-  setIsSubmitted(false);
-  
-  // Reset project data
-  setProjectData({
-    name: "",
-    description: "",
-    projectType: "thematic",
-    theme: "",
-    ngoPartner: "",
-    projectHead: "",
-    location: "",
-    beneficiaries: "",
-    objectives: "",
-    reportFile: null
-  });
 
-  // Reset budget items to initial state
-  setBudgetItems([
-    {
-      id: "1",
-      srNo: 1,
-      itemName: "",
-      description: "",
-      units: 0,
-      unitCost: 0,
-      cmsContribution: 0,
-      ngoContribution: 0,
-      beneficiaryContribution: 0,
-      governmentContribution: 0,
-      budgetType: "PROCUREMENT_COST"
+  // Different steps for create vs edit
+  const getSteps = () => {
+    if (editProjectId) {
+      // Edit mode - all 7 steps
+      return [
+        { id: 1, title: "Project Type & Head", icon: "🎯" },
+        { id: 2, title: "Basic Information", icon: "📋" },
+        { id: 3, title: "Budget Allocation", icon: "💰" },
+        { id: 4, title: "Budget Review", icon: "📊" },
+        { id: 5, title: "Work Plan", icon: "📅" },
+        { id: 6, title: "Work Plan Review", icon: "🔍" },
+        { id: 7, title: "Overall Review", icon: "✅" }
+      ];
+    } else {
+      // Create mode - only 4 steps
+      return [
+        { id: 1, title: "Project Type & Head", icon: "🎯" },
+        { id: 2, title: "Basic Information", icon: "📋" },
+        { id: 3, title: "Budget Allocation", icon: "💰" },
+        { id: 4, title: "Budget Review", icon: "📊" }
+      ];
     }
-  ]);
+  };
 
-  // Reset sub-projects
-  setSubProjects([]);
-  
-  // Reset submission state
-  setIsSubmitting(false);
-};
+  const steps = getSteps();
+  const totalSteps = steps.length;
+  const isLastStep = currentStep === totalSteps;
+
+  const resetForm = () => {
+    setCurrentStep(1);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setSelectedNgoId(null);
+    setIsSubmitted(false);
+    
+    setProjectData({
+      name: "",
+      description: "",
+      projectType: "thematic",
+      theme: "",
+      ngoPartner: "",
+      projectHead: "",
+      location: "",
+      beneficiaries: "",
+      objectives: "",
+      reportFile: null
+    });
+
+    setBudgetItems([
+      {
+        id: "1",
+        srNo: 1,
+        itemName: "",
+        description: "",
+        units: 0,
+        unitCost: 0,
+        cmsContribution: 0,
+        ngoContribution: 0,
+        beneficiaryContribution: 0,
+        governmentContribution: 0,
+        budgetType: "PROCUREMENT_COST"
+      }
+    ]);
+
+    setSubProjects([]);
+    setIsSubmitting(false);
+  };
+
   // Fetch NGOs when component opens
   useEffect(() => {
     if (open) {
       fetchNgos();
       
-      // Load edit data if in edit mode
       if (editProjectId && editProjectData) {
         loadEditData(editProjectData);
+      } else {
+        // Reset form when opening in create mode
+        resetForm();
       }
     }
   }, [open, editProjectId, editProjectData]);
@@ -180,71 +205,66 @@ const resetForm = () => {
       setNgos(response.data);
     } catch (error) {
       console.error("Error fetching NGOs:", error);
-      // You can add toast notification here
     }
   };
 
-  const loadEditData = (projectData: any) => {
-    // Set basic project data
-    setProjectData({
-      name: projectData.projectName || "",
-      description: projectData.projectDescription || "",
-      projectType: projectData.projectType === "IVDP" ? "integrated_village_development" : "thematic",
-      theme: projectData.projectTheme || "",
-      ngoPartner: projectData.projectNgoPartner || "",
-      projectHead: projectData.projectHead || "",
-      location: projectData.projectLocation || "",
-      beneficiaries: projectData.expectedBeneficiaries || "",
-      objectives: projectData.projectObjectives || "",
-      reportFile: null
-    });
+const loadEditData = (projectData: any) => {
+  setProjectData({
+    name: projectData.projectName || "",
+    description: projectData.projectDescription || "",
+    projectType: projectData.projectType === "IVDP" ? "integrated_village_development" : "thematic",
+    theme: projectData.projectTheme || "",
+    ngoPartner: projectData.projectNgoPartner || "",
+    projectHead: projectData.projectHead || "",
+    location: projectData.projectLocation || "",
+    beneficiaries: projectData.expectedBeneficiaries || "",
+    objectives: projectData.projectObjectives || "",
+    reportFile: null
+  });
 
-    // Set selected NGO ID if available
-    if (projectData.ngoId) {
-      setSelectedNgoId(projectData.ngoId);
-    }
+  if (projectData.ngoId) {
+    setSelectedNgoId(projectData.ngoId);
+  }
 
-    // Set dates
-    if (projectData.projectStartDate) {
-      setStartDate(new Date(projectData.projectStartDate));
-    }
-    if (projectData.projectEndDate) {
-      setEndDate(new Date(projectData.projectEndDate));
-    }
+  // ✅ Ensure both start and end dates are loaded
+  if (projectData.projectStartDate) {
+    setStartDate(new Date(projectData.projectStartDate));
+  }
+  if (projectData.projectEndDate) {
+    setEndDate(new Date(projectData.projectEndDate));
+  }
 
-    // Set budget items
-    if (projectData.budgetAllocationItems && projectData.budgetAllocationItems.length > 0) {
-      const loadedBudgetItems = projectData.budgetAllocationItems.map((item: any, index: number) => ({
-        id: (index + 1).toString(),
-        srNo: item.srNo || index + 1,
-        itemName: item.itemName || "",
-        description: item.description || "",
-        units: item.units || 0,
-        unitCost: item.unitCost || 0,
-        cmsContribution: item.cmsContribution || 0,
-        ngoContribution: item.ngoContribution || 0,
-        beneficiaryContribution: item.beneficiaryContribution || 0,
-        governmentContribution: item.governmentContribution || 0,
-        budgetType: item.budgetType || "PROCUREMENT_COST",
-        monthlyTargets: item.monthlyTargets || {}
-      }));
-      setBudgetItems(loadedBudgetItems);
-    }
+  if (projectData.budgetAllocationItems && projectData.budgetAllocationItems.length > 0) {
+    const loadedBudgetItems = projectData.budgetAllocationItems.map((item: any, index: number) => ({
+      id: (index + 1).toString(),
+      srNo: item.srNo || index + 1,
+      itemName: item.itemName || "",
+      description: item.description || "",
+      units: item.units || 0,
+      unitCost: item.unitCost || 0,
+      cmsContribution: item.cmsContribution || 0,
+      ngoContribution: item.ngoContribution || 0,
+      beneficiaryContribution: item.beneficiaryContribution || 0,
+      governmentContribution: item.governmentContribution || 0,
+      budgetType: item.budgetType || "PROCUREMENT_COST",
+      monthlyTargets: item.monthlyTargets || {}
+    }));
+    setBudgetItems(loadedBudgetItems);
+  }
 
-    // Set sub-projects if available for IVDP
-    if (projectData.projectType === "IVDP" && projectData.subProjects) {
-      const loadedSubProjects = projectData.subProjects.map((sub: any, index: number) => ({
-        id: sub.id || Date.now().toString() + index,
-        name: sub.name || "",
-        description: sub.description || "",
-        budget: sub.budget || 0,
-        startDate: sub.startDate ? new Date(sub.startDate) : undefined,
-        endDate: sub.endDate ? new Date(sub.endDate) : undefined,
-        orderIndex: sub.orderIndex || index
-      }));
-      setSubProjects(loadedSubProjects);
-    }
-  };
+  if (projectData.projectType === "IVDP" && projectData.subProjects) {
+    const loadedSubProjects = projectData.subProjects.map((sub: any, index: number) => ({
+      id: sub.id || Date.now().toString() + index,
+      name: sub.name || "",
+      description: sub.description || "",
+      budget: sub.budget || 0,
+      startDate: sub.startDate ? new Date(sub.startDate) : undefined,
+      endDate: sub.endDate ? new Date(sub.endDate) : undefined,
+      orderIndex: sub.orderIndex || index
+    }));
+    setSubProjects(loadedSubProjects);
+  }
+};
 
   const themes = [
     "Health",
@@ -259,7 +279,6 @@ const resetForm = () => {
     "Mr. Shiraj Pathan"
   ];
 
-  // Budget types based on project type
   const thematicBudgetTypes = [
     "PROCUREMENT_COST",
     "TRAINING_COST", 
@@ -293,7 +312,6 @@ const resetForm = () => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     
-    // Reset to first day of month for consistent monthly targets
     start.setDate(1);
     end.setDate(1);
     
@@ -389,19 +407,17 @@ const resetForm = () => {
     }, 0);
   };
 
-  // Helper to count total targets set
-  const getTotalTargetsSet = () => {
-    return budgetItems.reduce((count, item) => {
-      if (item.monthlyTargets) {
-        return count + Object.values(item.monthlyTargets).filter(target => 
-          target.target > 0 || target.description.trim() !== ''
-        ).length;
-      }
-      return count;
-    }, 0);
-  };
+const getTotalTargetsSet = () => {
+  return budgetItems.reduce((count, item) => {
+    if (item.monthlyTargets) {
+      return count + Object.values(item.monthlyTargets).filter(target => 
+        target && (target.target > 0 || (target.description && target.description.trim() !== ''))
+      ).length;
+    }
+    return count;
+  }, 0);
+};
 
-  // Calculate budget summary by type
   const getBudgetSummary = () => {
     const summary: any = {
       humanResourcesCost: 0,
@@ -412,7 +428,7 @@ const resetForm = () => {
       procurementCost: 0,
       civilConstructionCost: 0,
       trainingCost: 0,
-      investmentCost: 0 // Added for IVDP projects
+      investmentCost: 0
     };
 
     budgetItems.forEach(item => {
@@ -451,12 +467,10 @@ const resetForm = () => {
     return summary;
   };
 
-  // Handle NGO selection
   const handleNgoSelect = (ngoId: string) => {
     const ngoIdNum = parseInt(ngoId);
     setSelectedNgoId(ngoIdNum);
     
-    // Find the selected NGO to set the display name
     const selectedNgo = ngos.find(ngo => ngo.id === ngoIdNum);
     if (selectedNgo) {
       setProjectData({
@@ -466,16 +480,124 @@ const resetForm = () => {
     }
   };
 
-  // Updated steps - 7 step process
-  const steps = [
-    { id: 1, title: "Project Type & Head", icon: "🎯" },
-    { id: 2, title: "Basic Information", icon: "📋" },
-    { id: 3, title: "Budget Allocation", icon: "💰" },
-    { id: 4, title: "Budget Review", icon: "📊" },
-    { id: 5, title: "Work Plan", icon: "📅" },
-    { id: 6, title: "Work Plan Review", icon: "🔍" },
-    { id: 7, title: "Overall Review", icon: "✅" }
-  ];
+  const EnhancedWorkPlanDisplay = () => {
+    const durationInfo = getProjectDurationInfo();
+    const months = getMonthsBetweenDates();
+    
+    if (!durationInfo || months.length === 0) {
+      return (
+        <Card className="bg-muted/50 border-dashed">
+          <CardContent className="p-8 text-center">
+            <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h4 className="font-semibold mb-2">Project Dates Required</h4>
+            <p className="text-muted-foreground">Please set project start and end dates in Basic Information to create work plan</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-semibold text-blue-800 mb-1">Project Timeline Information</h4>
+                <p className="text-sm text-blue-700 mb-2">
+                  Your project runs from <strong>{durationInfo.start}</strong> to <strong>{durationInfo.end}</strong>, 
+                  spanning <strong>{durationInfo.monthCount} months</strong>.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          {budgetItems.map((item) => (
+            <Card key={item.id} className="work-plan-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-3">
+                    <div className="item-icon bg-primary/10 text-primary rounded-lg p-2">
+                      <span className="text-sm font-bold">{item.srNo}</span>
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">{item.itemName || `Item ${item.srNo}`}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <span className="text-sm font-medium text-primary">
+                          ₹{(item.units * item.unitCost).toLocaleString()}
+                        </span>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {item.budgetType.replace(/_/g, ' ').toLowerCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {months.map((month) => {
+                    const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
+                    return (
+                      <Card key={month} className="border-l-4 border-l-blue-500">
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-sm text-blue-800">{month}</h4>
+                              {monthlyTarget.target > 0 && (
+                                <span className="target-badge bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                  Target: {monthlyTarget.target}
+                                </span>
+                              )}
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Target Description</Label>
+                              <p className="text-sm mt-1 min-h-[40px]">
+                                {monthlyTarget.description || 'No specific activities planned'}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Work Plan Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="text-center">
+                <Label className="text-muted-foreground block">Total Months</Label>
+                <p className="font-medium text-lg">{months.length}</p>
+              </div>
+              <div className="text-center">
+                <Label className="text-muted-foreground block">Budget Items</Label>
+                <p className="font-medium text-lg">{budgetItems.length}</p>
+              </div>
+              <div className="text-center">
+                <Label className="text-muted-foreground block">Targets Set</Label>
+                <p className="font-medium text-lg">{getTotalTargetsSet()}</p>
+              </div>
+              <div className="text-center">
+                <Label className="text-muted-foreground block">Total Targets</Label>
+                <p className="font-medium text-lg">{months.length * budgetItems.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -612,7 +734,6 @@ const resetForm = () => {
               </div>
             </div>
 
-            {/* Sub-projects section for Integrated Village Development */}
             {projectData.projectType === 'integrated_village_development' && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -765,7 +886,7 @@ const resetForm = () => {
           </div>
         );
 
-      case 3: // Budget Allocation Matrix - NEW FORMAT without month dropdown
+      case 3:
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -859,7 +980,6 @@ const resetForm = () => {
                       </div>
                     </div>
                     
-                    {/* Contribution Section */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 border-t pt-4">
                       <div className="space-y-2">
                         <Label className="text-xs">CMS Contribution</Label>
@@ -899,7 +1019,6 @@ const resetForm = () => {
                       </div>
                     </div>
 
-                    {/* Total Cost Display */}
                     <div className="mt-4 p-3 bg-muted/50 rounded">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Total Cost:</span>
@@ -924,13 +1043,13 @@ const resetForm = () => {
           </div>
         );
 
-      case 4: // Budget Allocation Review
+      case 4:
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
               <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Budget Allocation Review</h3>
-              <p className="text-muted-foreground">Review your budget allocation before proceeding</p>
+              <p className="text-muted-foreground">Review your budget allocation before {editProjectId ? 'updating' : 'creating'} the project</p>
             </div>
 
             <Card>
@@ -981,363 +1100,330 @@ const resetForm = () => {
                 </CardContent>
               </Card>
             )}
+
+            {!editProjectId && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-start space-x-3">
+                    <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-blue-800 mb-1">Next Steps</h4>
+                      <p className="text-sm text-blue-700">
+                        After creating the project, you can add detailed work plans and monthly targets by editing the project.
+                        This allows you to get the project started quickly and add detailed planning later.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         );
 
-      case 5: // Work Plan & Timeline - SET TARGETS FOR EACH MONTH for each budget item
-        const durationInfo = getProjectDurationInfo();
-        
+     case 5:
+      // Only show work plan in edit mode
+      if (!editProjectId) {
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold mb-2">Work Plan & Timeline</h3>
-              <p className="text-muted-foreground">Set monthly targets for each budget item</p>
-            </div>
+          <div className="text-center py-8">
+            <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Work Plan Not Available</h3>
+            <p className="text-muted-foreground">
+              Work plan features are only available when editing existing projects.
+            </p>
+          </div>
+        );
+      }
 
-            {!startDate || !endDate ? (
-              <Card className="bg-muted/50 border-dashed">
-                <CardContent className="p-8 text-center">
-                  <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h4 className="font-semibold mb-2">Project Dates Required</h4>
-                  <p className="text-muted-foreground">Please set project start and end dates in Basic Information to create work plan</p>
-                </CardContent>
-              </Card>
-            ) : budgetItems.length === 0 ? (
-              <Card className="bg-muted/50 border-dashed">
-                <CardContent className="p-8 text-center">
-                  <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h4 className="font-semibold mb-2">No Budget Items</h4>
-                  <p className="text-muted-foreground">Please add budget items in the previous step to create work plan</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                {/* Project Timeline Information Card */}
-                {durationInfo && (
-                  <Card className="bg-blue-50 border-blue-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-3">
-                        <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <h4 className="font-semibold text-blue-800 mb-1">Project Timeline Information</h4>
-                          <p className="text-sm text-blue-700 mb-2">
-                            Your project runs from <strong>{durationInfo.start}</strong> to <strong>{durationInfo.end}</strong>, 
-                            spanning <strong>{durationInfo.monthCount} months</strong> ({durationInfo.months.join(', ')}).
-                          </p>
-                          <p className="text-xs text-blue-600">
-                            💡 <strong>Note:</strong> The system will automatically create monthly targets for all {durationInfo.monthCount} months 
-                            to ensure complete project tracking. Set targets to 0 for months with no planned activities.
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+      const durationInfo = getProjectDurationInfo();
+      
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-6">
+            <h3 className="text-lg font-semibold mb-2">Work Plan & Timeline</h3>
+            <p className="text-muted-foreground">Set monthly targets for each budget item</p>
+          </div>
 
-                <div className="border rounded-lg">
-                  <div className="overflow-x-auto max-h-[500px]">
-                    <table className="w-full border-collapse">
-                      <thead className="sticky top-0 bg-muted/50 z-20">
-                        <tr>
-                          <th className="border p-3 text-left font-semibold sticky left-0 bg-muted/50 z-30 min-w-[250px]">
-                            Budget Items
-                          </th>
-                          {getMonthsBetweenDates().map((month) => (
-                            <th key={month} className="border p-3 text-center font-semibold min-w-[180px]">
-                              {month}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {budgetItems.map((item) => (
-                          <tr key={item.id} className="hover:bg-muted/30">
-                            <td className="border p-3 sticky left-0 bg-background z-10 min-w-[250px]">
-                              <div>
-                                <p className="font-medium text-sm">{item.itemName || `Item ${item.srNo}`}</p>
-                                <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
-                                <p className="text-xs text-primary font-medium mt-1">
-                                  ₹{(item.units * item.unitCost).toLocaleString()}
-                                </p>
-                              </div>
-                            </td>
-                            {getMonthsBetweenDates().map((month) => {
-                              const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
-                              return (
-                                <td key={month} className="border p-2">
-                                  <div className="space-y-2 min-h-[100px]">
-                                    <div className="space-y-1">
-                                      <Label className="text-xs">Target</Label>
-                                      <Input
-                                        type="number"
-                                        value={monthlyTarget.target}
-                                        onChange={(e) => updateMonthlyTarget(item.id, month, 'target', Number(e.target.value))}
-                                        placeholder="0"
-                                        className="text-sm h-8"
-                                      />
-                                    </div>
-                                    <div className="space-y-1">
-                                      <Label className="text-xs">Description</Label>
-                                      <Textarea
-                                        value={monthlyTarget.description}
-                                        onChange={(e) => updateMonthlyTarget(item.id, month, 'description', e.target.value)}
-                                        placeholder={`Work description for ${month}...`}
-                                        className="text-sm min-h-[60px] resize-none"
-                                      />
-                                    </div>
-                                  </div>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Summary Card */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Work Plan Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                      <div className="text-center">
-                        <Label className="text-muted-foreground block">Total Months</Label>
-                        <p className="font-medium text-lg">{getMonthsBetweenDates().length}</p>
-                      </div>
-                      <div className="text-center">
-                        <Label className="text-muted-foreground block">Budget Items</Label>
-                        <p className="font-medium text-lg">{budgetItems.length}</p>
-                      </div>
-                      <div className="text-center">
-                        <Label className="text-muted-foreground block">Targets Set</Label>
-                        <p className="font-medium text-lg">
-                          {getTotalTargetsSet()}
-                        </p>
-                      </div>
-                      <div className="text-center">
-                        <Label className="text-muted-foreground block">Total Targets</Label>
-                        <p className="font-medium text-lg">
-                          {getMonthsBetweenDates().length * budgetItems.length}
+          {!startDate || !endDate ? (
+            <Card className="bg-muted/50 border-dashed">
+              <CardContent className="p-8 text-center">
+                <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h4 className="font-semibold mb-2">Project Dates Required</h4>
+                <p className="text-muted-foreground">Please set project start and end dates in Basic Information to create work plan</p>
+              </CardContent>
+            </Card>
+          ) : budgetItems.length === 0 ? (
+            <Card className="bg-muted/50 border-dashed">
+              <CardContent className="p-8 text-center">
+                <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h4 className="font-semibold mb-2">No Budget Items</h4>
+                <p className="text-muted-foreground">Please add budget items in the previous step to create work plan</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {durationInfo && (
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start space-x-3">
+                      <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-blue-800 mb-1">Project Timeline Information</h4>
+                        <p className="text-sm text-blue-700 mb-2">
+                          Your project runs from <strong>{durationInfo.start}</strong> to <strong>{durationInfo.end}</strong>, 
+                          spanning <strong>{durationInfo.monthCount} months</strong> ({durationInfo.months.join(', ')}).
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            )}
-          </div>
-        );
+              )}
 
-      case 6: // Work Plan Review
-        const workPlanDurationInfo = getProjectDurationInfo();
-        
-        return (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Work Plan Review</h3>
-              <p className="text-muted-foreground">Review your work plan and timeline</p>
-            </div>
-
-            {workPlanDurationInfo && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-blue-800">Project Timeline</h4>
-                      <p className="text-sm text-blue-700">
-                        {workPlanDurationInfo.start} to {workPlanDurationInfo.end} 
-                        ({workPlanDurationInfo.monthCount} months)
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-blue-800">Months:</p>
-                      <p className="text-sm text-blue-700">{workPlanDurationInfo.months.join(', ')}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Work Plan Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Project Duration:</span>
-                    <span>{getMonthsBetweenDates().length} months</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Budget Items:</span>
-                    <span>{budgetItems.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Targets Defined:</span>
-                    <span>{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {budgetItems.filter(item => item.monthlyTargets && Object.keys(item.monthlyTargets).length > 0).length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Work Plan Preview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {budgetItems.map((item) => (
-                      <div key={item.id} className="p-4 border rounded-lg">
-                        <div className="mb-4">
-                          <p className="font-medium text-lg">{item.itemName || `Item ${item.srNo}`}</p>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="border rounded-lg">
+                <div className="overflow-x-auto max-h-[500px]">
+                  <table className="w-full border-collapse">
+                    <thead className="sticky top-0 bg-muted/50 z-20">
+                      <tr>
+                        <th className="border p-3 text-left font-semibold sticky left-0 bg-muted/50 z-30 min-w-[250px]">
+                          Budget Items
+                        </th>
+                        {getMonthsBetweenDates().map((month) => (
+                          <th key={month} className="border p-3 text-center font-semibold min-w-[180px]">
+                            {month}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {budgetItems.map((item) => (
+                        <tr key={item.id} className="hover:bg-muted/30">
+                          <td className="border p-3 sticky left-0 bg-background z-10 min-w-[250px]">
+                            <div>
+                              <p className="font-medium text-sm">{item.itemName || `Item ${item.srNo}`}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                              <p className="text-xs text-primary font-medium mt-1">
+                                ₹{(item.units * item.unitCost).toLocaleString()}
+                              </p>
+                            </div>
+                          </td>
                           {getMonthsBetweenDates().map((month) => {
                             const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
                             return (
-                              <div key={month} className="border rounded p-3 bg-muted/20">
-                                <p className="font-medium text-sm mb-2">{month}</p>
-                                <p className="text-sm text-muted-foreground mb-1">
-                                  <span className="font-medium">Target:</span> {monthlyTarget.target}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  <span className="font-medium">Description:</span> {monthlyTarget.description || 'No description'}
-                                </p>
-                              </div>
+                              <td key={month} className="border p-2">
+                                <div className="space-y-2 min-h-[100px]">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Target</Label>
+                                    <Input
+                                      type="number"
+                                      value={monthlyTarget.target}
+                                      onChange={(e) => updateMonthlyTarget(item.id, month, 'target', Number(e.target.value))}
+                                      placeholder="0"
+                                      className="text-sm h-8"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Description</Label>
+                                    <Textarea
+                                      value={monthlyTarget.description}
+                                      onChange={(e) => updateMonthlyTarget(item.id, month, 'description', e.target.value)}
+                                      placeholder={`Work description for ${month}...`}
+                                      className="text-sm min-h-[60px] resize-none"
+                                    />
+                                  </div>
+                                </div>
+                              </td>
                             );
                           })}
-                        </div>
-                      </div>
-                    ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Work Plan Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                    <div className="text-center">
+                      <Label className="text-muted-foreground block">Total Months</Label>
+                      <p className="font-medium text-lg">{getMonthsBetweenDates().length}</p>
+                    </div>
+                    <div className="text-center">
+                      <Label className="text-muted-foreground block">Budget Items</Label>
+                      <p className="font-medium text-lg">{budgetItems.length}</p>
+                    </div>
+                    <div className="text-center">
+                      <Label className="text-muted-foreground block">Targets Set</Label>
+                      <p className="font-medium text-lg">{getTotalTargetsSet()}</p>
+                    </div>
+                    <div className="text-center">
+                      <Label className="text-muted-foreground block">Total Targets</Label>
+                      <p className="font-medium text-lg">{getMonthsBetweenDates().length * budgetItems.length}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
+          )}
+        </div>
+      );
+
+    case 6:
+      // Only show work plan review in edit mode
+      if (!editProjectId) {
+        return (
+          <div className="text-center py-8">
+            <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Work Plan Review Not Available</h3>
+            <p className="text-muted-foreground">
+              Work plan review is only available when editing existing projects.
+            </p>
           </div>
         );
+      }
 
-      case 7: // Overall Review
-        const reviewDurationInfo = getProjectDurationInfo();
-        
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-6">
+            <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Work Plan Review</h3>
+            <p className="text-muted-foreground">Review your work plan and timeline</p>
+          </div>
+          <EnhancedWorkPlanDisplay />
+        </div>
+      );
+
+    case 7:
+      // Only show overall review in edit mode
+      if (!editProjectId) {
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Overall Review</h3>
-              <p className="text-muted-foreground">Review all project details before final submission</p>
-            </div>
+          <div className="text-center py-8">
+            <Info className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Overall Review Not Available</h3>
+            <p className="text-muted-foreground">
+              Overall review is only available when editing existing projects.
+            </p>
+          </div>
+        );
+      }
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Project Name</Label>
-                    <p className="font-medium">{projectData.name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Theme</Label>
-                    <p className="font-medium">{projectData.theme}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">NGO Partner</Label>
-                    <p className="font-medium">{projectData.ngoPartner}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Beneficiaries</Label>
-                    <p className="font-medium">{projectData.beneficiaries}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Location</Label>
-                    <p className="font-medium">{projectData.location}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Duration</Label>
-                    <p className="font-medium">
-                      {startDate && endDate ? 
-                        `${format(startDate, "PPP")} - ${format(endDate, "PPP")}` : 
-                        "Not specified"
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Project Type</Label>
-                    <p className="font-medium">
-                      {projectData.projectType === 'thematic' ? 'Thematic Project' : 'Integrated Village Development'}
-                    </p>
-                  </div>
-                  {projectData.projectType === 'integrated_village_development' && (
-                    <div>
-                      <Label className="text-muted-foreground">Sub-Projects</Label>
-                      <p className="font-medium">{subProjects.length}</p>
-                    </div>
-                  )}
+      const reviewDurationInfo = getProjectDurationInfo();
+      
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-6">
+            <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Overall Review</h3>
+            <p className="text-muted-foreground">Review all project details before final submission</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Project Name</Label>
+                  <p className="font-medium">{projectData.name}</p>
                 </div>
-                {reviewDurationInfo && (
-                  <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-                    <p className="text-sm font-medium text-blue-800">Project Timeline:</p>
-                    <p className="text-sm text-blue-700">
-                      {reviewDurationInfo.start} to {reviewDurationInfo.end} 
-                      ({reviewDurationInfo.monthCount} months: {reviewDurationInfo.months.join(', ')})
-                    </p>
+                <div>
+                  <Label className="text-muted-foreground">Theme</Label>
+                  <p className="font-medium">{projectData.theme}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">NGO Partner</Label>
+                  <p className="font-medium">{projectData.ngoPartner}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Beneficiaries</Label>
+                  <p className="font-medium">{projectData.beneficiaries}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Location</Label>
+                  <p className="font-medium">{projectData.location}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Duration</Label>
+                  <p className="font-medium">
+                    {startDate && endDate ? 
+                      `${format(startDate, "PPP")} - ${format(endDate, "PPP")}` : 
+                      "Not specified"
+                    }
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Project Type</Label>
+                  <p className="font-medium">
+                    {projectData.projectType === 'thematic' ? 'Thematic Project' : 'Integrated Village Development'}
+                  </p>
+                </div>
+                {projectData.projectType === 'integrated_village_development' && (
+                  <div>
+                    <Label className="text-muted-foreground">Sub-Projects</Label>
+                    <p className="font-medium">{subProjects.length}</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Budget Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Total Budget Items</Label>
-                    <p className="font-medium text-xl">{budgetItems.length}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Total Budget Allocation</Label>
-                    <p className="font-medium text-xl">₹{getTotalAllocation().toLocaleString()}</p>
-                  </div>
+              </div>
+              {reviewDurationInfo && (
+                <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                  <p className="text-sm font-medium text-blue-800">Project Timeline:</p>
+                  <p className="text-sm text-blue-700">
+                    {reviewDurationInfo.start} to {reviewDurationInfo.end} 
+                    ({reviewDurationInfo.monthCount} months: {reviewDurationInfo.months.join(', ')})
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Work Plan Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Project Duration</Label>
-                    <p className="font-medium">{getMonthsBetweenDates().length} months</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Targets Set</Label>
-                    <p className="font-medium">{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</p>
-                  </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Budget Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Total Budget Items</Label>
+                  <p className="font-medium text-xl">{budgetItems.length}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
+                <div>
+                  <Label className="text-muted-foreground">Total Budget Allocation</Label>
+                  <p className="font-medium text-xl">₹{getTotalAllocation().toLocaleString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      default:
-        return null;
-    }
-  };
+          <Card>
+            <CardHeader>
+              <CardTitle>Work Plan Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Project Duration</Label>
+                  <p className="font-medium">{getMonthsBetweenDates().length} months</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Targets Set</Label>
+                  <p className="font-medium">{getTotalTargetsSet()} of {getMonthsBetweenDates().length * budgetItems.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+};
 
   const handleNext = () => {
-    if (currentStep < 7) {
+    if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -1348,7 +1434,6 @@ const resetForm = () => {
     }
   };
 
-  // Add this function to handle file upload
   const uploadDocument = async (file: File): Promise<string | null> => {
     try {
       const formData = new FormData();
@@ -1361,7 +1446,7 @@ const resetForm = () => {
       });
       
       if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
-        return response.data.uploadedUrls[0]; // Return the full URL
+        return response.data.uploadedUrls[0];
       }
       return null;
     } catch (error) {
@@ -1370,207 +1455,187 @@ const resetForm = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedNgoId) {
-      alert("Please select an NGO partner");
-      return;
+const handleSubmit = async () => {
+  if (!selectedNgoId) {
+    alert("Please select an NGO partner");
+    return;
+  }
+
+  if (!startDate || !endDate) {
+    alert("Please select both start and end dates");
+    return;
+  }
+
+  setIsSubmitting(true);
+  try {
+    let uploadedDprUrl = null;
+    if (projectData.reportFile) {
+      uploadedDprUrl = await uploadDocument(projectData.reportFile);
+      if (!uploadedDprUrl) {
+        alert("❌ Failed to upload project report. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
     }
 
-    setIsSubmitting(true);
-    try {
-      // Upload document if exists and get the FULL URL
-      let uploadedDprUrl = null;
-      if (projectData.reportFile) {
-        uploadedDprUrl = await uploadDocument(projectData.reportFile);
-        if (!uploadedDprUrl) {
-          alert("❌ Failed to upload project report. Please try again.");
-          setIsSubmitting(false);
-          return;
-        }
-        console.log("📄 Document uploaded successfully:", uploadedDprUrl);
-      }
+    const budgetSummary = getBudgetSummary();
+    
+    const workPlanDetails: string[] = [];
+    const monthlyTargetItems: MonthlyTargetItem[] = [];
 
-      const budgetSummary = getBudgetSummary();
-      
-      // Create work plan details
-      const workPlanDetails: string[] = [];
-
-      // Create monthlyTargetItems array (SEPARATE from budget items)
-      const monthlyTargetItems: MonthlyTargetItem[] = [];
-
-      // Format budget allocation items WITHOUT monthly targets
-      const budgetAllocationItems = budgetItems.map(item => {
-        // Process monthly targets for this item and add to separate array
+    const budgetAllocationItems = budgetItems.map(item => {
+      // Only process monthly targets in edit mode (when we have all 7 steps)
+      if (editProjectId) {
         getMonthsBetweenDates().forEach(month => {
           const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
           
-          // Only include targets with values or descriptions
           if (monthlyTarget.target > 0 || monthlyTarget.description.trim() !== '') {
             const targetMonth = new Date(month);
             
-            // Add to work plan details
             if (monthlyTarget.description.trim() !== '') {
               workPlanDetails.push(`${month} - ${item.itemName}: ${monthlyTarget.description}`);
             }
             
-            // Add to monthlyTargetItems array
             monthlyTargetItems.push({
-              budgetAllocationItemSrNo: item.srNo.toString(), // Reference by serial number
+              budgetAllocationItemSrNo: item.srNo.toString(),
               targetMonth: format(targetMonth, "yyyy-MM-dd"),
               plannedTarget: monthlyTarget.target || 0,
               targetDescription: monthlyTarget.description.trim() || `No specific target set for ${month.split(' ')[0].toUpperCase()} ${month.split(' ')[1]}`
             });
           }
         });
+      }
 
-        return {
-          srNo: item.srNo.toString(),
-          itemName: item.itemName,
-          description: item.description,
-          units: item.units,
-          unitCost: item.unitCost,
-          total: item.units * item.unitCost,
-          cmsContribution: item.cmsContribution,
-          ngoContribution: item.ngoContribution,
-          governmentContribution: item.governmentContribution,
-          beneficiaryContribution: item.beneficiaryContribution,
-          budgetType: item.budgetType
-          // REMOVED: monthlyTargets from here
-        };
-      });
-
-      // Use the FULL uploaded URL instead of just filename
-      const projectDprValue = uploadedDprUrl; // This is the full URL like "https://lakhpatididi.in/cmsmis/documents/..."
-
-      const payload = {
-        projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
-        projectHead: projectData.projectHead,
-        projectName: projectData.name,
-        projectTheme: projectData.theme,
-        ngoId: selectedNgoId,
-        projectNgoPartnerName: projectData.ngoPartner,
-        expectedBeneficiaries: projectData.beneficiaries,
-        projectLocation: projectData.location,
-        projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
-        projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
-        projectDescription: projectData.description,
-        projectObjectives: projectData.objectives,
-        projectdpr: projectDprValue, // Use the full URL here
-        projectStatus: "Planned",
-        projectManagerId: 1,
-
-        budget: {
-          procurementCost: budgetSummary.procurementCost || 0,
-          trainingCost: budgetSummary.trainingCost || 0,
-          civilConstructionCost: budgetSummary.civilConstructionCost || 0,
-          contingencyMiscellaneousCost: budgetSummary.miscellaneousCost || 0,
-          humanResourcesCost: budgetSummary.humanResourcesCost || 0,
-          adminCost: budgetSummary.adminCost || 0,
-          managementAndCoordinationCost: budgetSummary.managementAndCoordinationCost || 0,
-          governmentConvergenceCost: budgetSummary.governmentConvergenceCost || 0,
-          ...(projectData.projectType === 'integrated_village_development' && {
-            investmentCost: budgetSummary.investmentCost || 0
-          }),
-          totalBudget: getTotalAllocation(),
-          totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
-          totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
-          totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
-          totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
-        },
-
-        workPlan: {
-          workPlanDetails: workPlanDetails.join("\n")
-        },
-
-        budgetAllocationItems: budgetAllocationItems,
-
-        // ADD THIS: Separate monthly targets array
-        monthlyTargetItems: monthlyTargetItems,
-
-        ...(projectData.projectType === 'integrated_village_development' && {
-          subProjects: subProjects.map((sub, index) => ({
-            id: sub.id,
-            name: sub.name,
-            description: sub.description,
-            budget: sub.budget,
-            startDate: sub.startDate ? format(sub.startDate, "yyyy-MM-dd") : null,
-            endDate: sub.endDate ? format(sub.endDate, "yyyy-MM-dd") : null,
-            orderIndex: index
-          }))
-        })
+      return {
+        srNo: item.srNo.toString(),
+        itemName: item.itemName,
+        description: item.description,
+        units: item.units,
+        unitCost: item.unitCost,
+        total: item.units * item.unitCost,
+        cmsContribution: item.cmsContribution,
+        ngoContribution: item.ngoContribution,
+        governmentContribution: item.governmentContribution,
+        beneficiaryContribution: item.beneficiaryContribution,
+        budgetType: item.budgetType
       };
+    });
 
-      // Log the payload for debugging
-      console.log("📤 Submitting Project Payload:", JSON.stringify(payload, null, 2));
-      console.log("📊 Monthly Targets Count:", monthlyTargetItems.length);
-      console.log("📄 Project DPR URL:", projectDprValue);
+    const projectDprValue = uploadedDprUrl;
 
-      let response;
-      if (editProjectId) {
-        console.log(`🔄 Updating existing project with ID: ${editProjectId}`);
-        response = await api.put(`/api/projects/${editProjectId}`, payload);
-      } else {
-        console.log("🆕 Creating new project");
-        response = await api.post("/api/projects", payload);
-      }
+    // ✅ FIXED: Ensure all required fields are included
+    const payload = {
+      projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
+      projectHead: projectData.projectHead,
+      projectName: projectData.name,
+      projectTheme: projectData.theme,
+      ngoId: selectedNgoId,
+      projectNgoPartnerName: projectData.ngoPartner,
+      expectedBeneficiaries: projectData.beneficiaries,
+      projectLocation: projectData.location,
+      projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
+      projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null, // ✅ CRITICAL FIX: This was missing
+      projectDescription: projectData.description,
+      projectObjectives: projectData.objectives,
+      projectdpr: projectDprValue,
+      projectStatus: "Planned",
+      projectManagerId: 1,
 
-      // Log the response for debugging
-      console.log("✅ Project API Response:", JSON.stringify(response.data, null, 2));
+      budget: {
+        procurementCost: budgetSummary.procurementCost || 0,
+        trainingCost: budgetSummary.trainingCost || 0,
+        civilConstructionCost: budgetSummary.civilConstructionCost || 0,
+        contingencyMiscellaneousCost: budgetSummary.miscellaneousCost || 0,
+        humanResourcesCost: budgetSummary.humanResourcesCost || 0,
+        adminCost: budgetSummary.adminCost || 0,
+        managementAndCoordinationCost: budgetSummary.managementAndCoordinationCost || 0,
+        governmentConvergenceCost: budgetSummary.governmentConvergenceCost || 0,
+        ...(projectData.projectType === 'integrated_village_development' && {
+          investmentCost: budgetSummary.investmentCost || 0
+        }),
+        totalBudget: getTotalAllocation(),
+        totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
+        totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
+        totalGovernmentContribution: budgetItems.reduce((sum, item) => sum + item.governmentContribution, 0),
+        totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
+      },
 
-      // FIXED: Properly verify monthly targets from nested structure
-      const savedTargets = response.data.budgetAllocationItems?.flatMap(
-        (item: any) => item.monthlyTargets || []
-      ) || [];
+      workPlan: {
+        workPlanDetails: workPlanDetails.join("\n")
+      },
 
-      if (savedTargets.length > 0) {
-        console.log("🎯 Monthly targets saved successfully:", savedTargets.length, "targets");
-      } else {
-        console.warn("⚠️ No monthly targets were saved in the response.");
-      }
+      budgetAllocationItems: budgetAllocationItems,
 
-      // Show success alert
-      alert(`✅ ${editProjectId ? "Project updated" : "Project created"} successfully!`);
-      setIsSubmitted(true);
+      // Only include monthly targets in edit mode
+      ...(editProjectId && {
+        monthlyTargetItems: monthlyTargetItems
+      }),
 
-      // Call the onSubmit callback with the response data
-      onSubmit(response.data);
+      ...(projectData.projectType === 'integrated_village_development' && {
+        subProjects: subProjects.map((sub, index) => ({
+          id: sub.id,
+          name: sub.name,
+          description: sub.description,
+          budget: sub.budget,
+          startDate: sub.startDate ? format(sub.startDate, "yyyy-MM-dd") : null,
+          endDate: sub.endDate ? format(sub.endDate, "yyyy-MM-dd") : null,
+          orderIndex: index
+        }))
+      })
+    };
 
-    } catch (error: any) {
-      console.error("❌ Error submitting project:", error);
-      
-      if (error.response) {
-        console.error("🚨 API Error Response:", error.response.data);
-        console.error("🚨 API Error Status:", error.response.status);
-        console.error("🚨 API Error Headers:", error.response.headers);
-        
-        // Try to get more detailed error message
-        const errorMessage = error.response.data.message || 
-                            error.response.data.error || 
-                            JSON.stringify(error.response.data);
-        
-        alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${errorMessage}`);
-      } else if (error.request) {
-        console.error("🚨 Network Error:", error.request);
-        alert("❌ Network error. Please check your connection and try again.");
-      } else {
-        console.error("🚨 Error:", error.message);
-        alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.message}`);
-      }
-    } finally {
-      setIsSubmitting(false);
+    console.log("📤 Submitting Project Payload:", JSON.stringify(payload, null, 2));
+
+    let response;
+    if (editProjectId) {
+      console.log(`🔄 Updating existing project with ID: ${editProjectId}`);
+      response = await api.put(`/api/projects/${editProjectId}`, payload);
+    } else {
+      console.log("🆕 Creating new project");
+      response = await api.post("/api/projects", payload);
     }
-  };
+
+    console.log("✅ Project API Response:", JSON.stringify(response.data, null, 2));
+
+    alert(`✅ ${editProjectId ? "Project updated" : "Project created"} successfully!`);
+    setIsSubmitted(true);
+
+    onSubmit(response.data);
+
+  } catch (error: any) {
+    console.error("❌ Error submitting project:", error);
+    
+    // Enhanced error handling with more detailed information
+    if (error.response) {
+      console.error("❌ Server Response Data:", error.response.data);
+      console.error("❌ Server Response Status:", error.response.status);
+      console.error("❌ Server Response Headers:", error.response.headers);
+      
+      const errorMessage = error.response.data.message || 
+                          error.response.data.error || 
+                          JSON.stringify(error.response.data);
+      alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${errorMessage}`);
+    } else if (error.request) {
+      console.error("❌ No response received:", error.request);
+      alert("❌ Network error. Please check your connection and try again.");
+    } else {
+      console.error("❌ Request setup error:", error.message);
+      alert(`❌ Failed to ${editProjectId ? "update" : "create"} project: ${error.message}`);
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editProjectId ? "Edit Project" : "Create New Project"}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Progress Steps */}
         <div className="flex justify-between mb-8">
           {steps.map((step) => (
             <div
@@ -1595,12 +1660,10 @@ const resetForm = () => {
           ))}
         </div>
 
-        {/* Step Content */}
         <div className="min-h-[400px]">
           {renderStepContent()}
         </div>
 
-        {/* Navigation */}
         <div className="flex justify-between pt-6 border-t">
           <Button
             variant="outline"
@@ -1611,7 +1674,7 @@ const resetForm = () => {
             Previous
           </Button>
           
-          {currentStep === 7 ? (
+          {isLastStep ? (
             <Button 
               onClick={handleSubmit} 
               className="bg-success hover:bg-success/90"
@@ -1632,7 +1695,6 @@ const resetForm = () => {
     </Dialog>
   );
 }
-
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import { useState } from "react";
