@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import { useEffect, useState } from "react";
 // import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import { Button } from "@/components/ui/button";
@@ -725,15 +726,25 @@ export default function ProjectManagement() {
   };
 
   // ✅ Handle wizard submission (both create and update)
-  const handleWizardSubmit = async (formData: any) => {
-    console.log("🚀 Wizard submit triggered - Edit mode:", isEditMode, "Project ID:", editingProjectId);
+  // const handleWizardSubmit = async (formData: any) => {
+  //   console.log("🚀 Wizard submit triggered - Edit mode:", isEditMode, "Project ID:", editingProjectId);
     
-    if (isEditMode && editingProjectId) {
-      await handleUpdate(editingProjectId, formData);
-    } else {
-      await handleCreate(formData);
-    }
-  };
+  //   if (isEditMode && editingProjectId) {
+  //     await handleUpdate(editingProjectId, formData);
+  //   } else {
+  //     await handleCreate(formData);
+  //   }
+  // };
+
+  const handleWizardSubmit = async (formData: any) => {
+  console.log("🚀 Wizard submit triggered - Edit mode:", isEditMode, "Project ID:", editingProjectId);
+  
+  if (isEditMode && editingProjectId) {
+    await handleUpdate(editingProjectId, formData);
+  } else {
+    await handleCreate(formData); // This calls the API
+  }
+};
 
   // ✅ Close wizard and reset state
   const handleWizardClose = (open: boolean) => {
