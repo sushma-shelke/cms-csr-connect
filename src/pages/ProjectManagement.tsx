@@ -605,8 +605,8 @@ import { MISReportManager } from "@/components/project/MISReportManager";
 import {
   getProjects,
   getProjectById,
-  createProject,
-  updateProject,
+  // createProject,
+  // updateProject,
   deleteProject,
 } from "@/api/projects";
 
@@ -655,8 +655,8 @@ export default function ProjectManagement() {
     try {
       console.log("🆕 Creating new project with data:", formData);
       
-      const response = await createProject(formData);
-      console.log("✅ Project created successfully:", response);
+      // const response = await createProject(formData);
+      // console.log("✅ Project created successfully:", response);
       
       fetchProjects();
       setShowCreateWizard(false);
@@ -677,8 +677,8 @@ export default function ProjectManagement() {
     try {
       console.log("🔄 Updating project ID:", id, "with data:", projectData);
       
-      const response = await updateProject(id, projectData);
-      console.log("✅ Project updated successfully:", response);
+      // const response = await updateProject(id, projectData);
+      // console.log("✅ Project updated successfully:", response);
       
       fetchProjects();
       setEditProject(null);
@@ -948,10 +948,7 @@ export default function ProjectManagement() {
             <TrendingUp className="h-4 w-4 mr-2" />
             Project Portfolio
           </TabsTrigger>
-         {/*  <TabsTrigger value="mis-reports">
-            <FileText className="h-4 w-4 mr-2" />
-            MIS Reports
-          </TabsTrigger> */}
+
           <TabsTrigger value="analytics">
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
@@ -1104,10 +1101,6 @@ export default function ProjectManagement() {
             </CardContent>
           </Card>
         </TabsContent>
-
-    {/*     <TabsContent value="mis-reports">
-          <MISReportManager />
-        </TabsContent> */}
 
         <TabsContent value="analytics">
           <div className="grid gap-6">

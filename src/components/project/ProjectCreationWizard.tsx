@@ -185,86 +185,139 @@ export function ProjectCreationWizard({
     setIsSubmitting(false);
   };
 
-  // Fetch NGOs when component opens
-  useEffect(() => {
-    if (open) {
-      fetchNgos();
-      
+// Fetch NGOs when component opens
+useEffect(() => {
+  if (open) {
+    fetchNgos().then(() => {
+      // After NGOs are fetched, load edit data if needed
       if (editProjectId && editProjectData) {
         loadEditData(editProjectData);
       } else {
         // Reset form when opening in create mode
         resetForm();
       }
-    }
-  }, [open, editProjectId, editProjectData]);
-
-  const fetchNgos = async () => {
-    try {
-      const response = await api.get("/api/ngos");
-      setNgos(response.data);
-    } catch (error) {
-      console.error("Error fetching NGOs:", error);
-    }
-  };
-
-const loadEditData = (projectData: any) => {
-  setProjectData({
-    name: projectData.projectName || "",
-    description: projectData.projectDescription || "",
-    projectType: projectData.projectType === "IVDP" ? "integrated_village_development" : "thematic",
-    theme: projectData.projectTheme || "",
-    ngoPartner: projectData.projectNgoPartner || "",
-    projectHead: projectData.projectHead || "",
-    location: projectData.projectLocation || "",
-    beneficiaries: projectData.expectedBeneficiaries || "",
-    objectives: projectData.projectObjectives || "",
-    reportFile: null
-  });
-
-  if (projectData.ngoId) {
-    setSelectedNgoId(projectData.ngoId);
+    });
   }
+}, [open, editProjectId, editProjectData]);
 
-  // ✅ Ensure both start and end dates are loaded
-  if (projectData.projectStartDate) {
-    setStartDate(new Date(projectData.projectStartDate));
-  }
-  if (projectData.projectEndDate) {
-    setEndDate(new Date(projectData.projectEndDate));
-  }
-
-  if (projectData.budgetAllocationItems && projectData.budgetAllocationItems.length > 0) {
-    const loadedBudgetItems = projectData.budgetAllocationItems.map((item: any, index: number) => ({
-      id: (index + 1).toString(),
-      srNo: item.srNo || index + 1,
-      itemName: item.itemName || "",
-      description: item.description || "",
-      units: item.units || 0,
-      unitCost: item.unitCost || 0,
-      cmsContribution: item.cmsContribution || 0,
-      ngoContribution: item.ngoContribution || 0,
-      beneficiaryContribution: item.beneficiaryContribution || 0,
-      governmentContribution: item.governmentContribution || 0,
-      budgetType: item.budgetType || "PROCUREMENT_COST",
-      monthlyTargets: item.monthlyTargets || {}
-    }));
-    setBudgetItems(loadedBudgetItems);
-  }
-
-  if (projectData.projectType === "IVDP" && projectData.subProjects) {
-    const loadedSubProjects = projectData.subProjects.map((sub: any, index: number) => ({
-      id: sub.id || Date.now().toString() + index,
-      name: sub.name || "",
-      description: sub.description || "",
-      budget: sub.budget || 0,
-      startDate: sub.startDate ? new Date(sub.startDate) : undefined,
-      endDate: sub.endDate ? new Date(sub.endDate) : undefined,
-      orderIndex: sub.orderIndex || index
-    }));
-    setSubProjects(loadedSubProjects);
+const fetchNgos = async () => {
+  try {
+    const response = await api.get("/api/ngos");
+    console.log(response, "NGO");
+    
+    setNgos(response.data);
+    return response.data; // Return the data for chaining
+  } catch (error) {
+    console.error("Error fetching NGOs:", error);
+    return []; // Return empty array on error
   }
 };
+
+  const loadEditData = (projectData: any) => {
+    console.log("🔍 Loading edit data - NGO Info:", {
+      ngoId: projectData.ngoId,
+      ngoPartner: projectData.projectNgoPartner,
+      availableNgos: ngos
+    });
+
+    setProjectData({
+      name: projectData.projectName || "",
+      description: projectData.projectDescription || "",
+      projectType: projectData.projectType === "IVDP" ? "integrated_village_development" : "thematic",
+      theme: projectData.projectTheme || "",
+      ngoPartner: projectData.projectNgoPartner || projectData.projectNgoPartnerName || "",
+      projectHead: projectData.projectHead || "",
+      location: projectData.projectLocation || "",
+      beneficiaries: projectData.expectedBeneficiaries || "",
+      objectives: projectData.projectObjectives || "",
+      reportFile: null
+    });
+
+    // ✅ FIX: Set selectedNgoId from the project data
+    if (projectData.ngoId) {
+      console.log("✅ Setting selectedNgoId from project data:", projectData.ngoId);
+      setSelectedNgoId(projectData.ngoId);
+    } else {
+      // If ngoId is not available, try to find it from ngoPartner name
+      const ngoPartnerName = projectData.projectNgoPartner || projectData.projectNgoPartnerName;
+      const foundNgo = ngos.find(ngo => ngo.ngoName === ngoPartnerName);
+      if (foundNgo) {
+        console.log("✅ Found NGO by name, setting ID:", foundNgo.id);
+        setSelectedNgoId(foundNgo.id);
+      } else {
+        console.warn("⚠️ Could not find NGO ID for partner:", ngoPartnerName);
+        setSelectedNgoId(null);
+      }
+    }
+
+    // ✅ Ensure both start and end dates are loaded
+    if (projectData.projectStartDate) {
+      setStartDate(new Date(projectData.projectStartDate));
+    }
+    if (projectData.projectEndDate) {
+      setEndDate(new Date(projectData.projectEndDate));
+    }
+
+    // ✅ Load budget items with monthly targets
+    if (projectData.budgetAllocationItems && projectData.budgetAllocationItems.length > 0) {
+      const loadedBudgetItems = projectData.budgetAllocationItems.map((item: any, index: number) => {
+        // Process monthly targets for this budget item
+        const monthlyTargets: { [month: string]: MonthlyTargetData } = {};
+        
+        if (item.monthlyTargets && Array.isArray(item.monthlyTargets)) {
+          item.monthlyTargets.forEach((target: any) => {
+            const monthKey = format(new Date(target.targetMonth), "MMMM yyyy");
+            monthlyTargets[monthKey] = {
+              target: target.plannedTarget || 0,
+              description: target.targetDescription || ''
+            };
+          });
+        }
+        
+        // Also check the root level monthlyTargets array
+        if (projectData.monthlyTargets && Array.isArray(projectData.monthlyTargets)) {
+          projectData.monthlyTargets.forEach((target: any) => {
+            if (target.budgetAllocationItemSrNo === item.srNo.toString()) {
+              const monthKey = format(new Date(target.targetMonth), "MMMM yyyy");
+              monthlyTargets[monthKey] = {
+                target: target.plannedTarget || 0,
+                description: target.targetDescription || ''
+              };
+            }
+          });
+        }
+
+        return {
+          id: (index + 1).toString(),
+          srNo: item.srNo || index + 1,
+          itemName: item.itemName || "",
+          description: item.description || "",
+          units: item.units || 0,
+          unitCost: item.unitCost || 0,
+          cmsContribution: item.cmsContribution || 0,
+          ngoContribution: item.ngoContribution || 0,
+          beneficiaryContribution: item.beneficiaryContribution || 0,
+          governmentContribution: item.governmentContribution || 0,
+          budgetType: item.budgetType || "PROCUREMENT_COST",
+          monthlyTargets: Object.keys(monthlyTargets).length > 0 ? monthlyTargets : undefined
+        };
+      });
+      setBudgetItems(loadedBudgetItems);
+    }
+
+    if (projectData.projectType === "IVDP" && projectData.subProjects) {
+      const loadedSubProjects = projectData.subProjects.map((sub: any, index: number) => ({
+        id: sub.id || Date.now().toString() + index,
+        name: sub.name || "",
+        description: sub.description || "",
+        budget: sub.budget || 0,
+        startDate: sub.startDate ? new Date(sub.startDate) : undefined,
+        endDate: sub.endDate ? new Date(sub.endDate) : undefined,
+        orderIndex: sub.orderIndex || index
+      }));
+      setSubProjects(loadedSubProjects);
+    }
+  };
 
   const themes = [
     "Health",
@@ -407,16 +460,16 @@ const loadEditData = (projectData: any) => {
     }, 0);
   };
 
-const getTotalTargetsSet = () => {
-  return budgetItems.reduce((count, item) => {
-    if (item.monthlyTargets) {
-      return count + Object.values(item.monthlyTargets).filter(target => 
-        target && (target.target > 0 || (target.description && target.description.trim() !== ''))
-      ).length;
-    }
-    return count;
-  }, 0);
-};
+  const getTotalTargetsSet = () => {
+    return budgetItems.reduce((count, item) => {
+      if (item.monthlyTargets) {
+        return count + Object.values(item.monthlyTargets).filter(target => 
+          target && (target.target > 0 || (target.description && target.description.trim() !== ''))
+        ).length;
+      }
+      return count;
+    }, 0);
+  };
 
   const getBudgetSummary = () => {
     const summary: any = {
@@ -1455,7 +1508,13 @@ const getTotalTargetsSet = () => {
     }
   };
 
-const handleSubmit = async () => {
+const handleSubmit = async (e?: React.FormEvent) => {
+  // Prevent default form submission behavior
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   if (!selectedNgoId) {
     alert("Please select an NGO partner");
     return;
@@ -1463,6 +1522,12 @@ const handleSubmit = async () => {
 
   if (!startDate || !endDate) {
     alert("Please select both start and end dates");
+    return;
+  }
+
+  // Prevent multiple submissions
+  if (isSubmitting) {
+    console.log("⚠️ Submission already in progress, skipping...");
     return;
   }
 
@@ -1481,23 +1546,25 @@ const handleSubmit = async () => {
     const budgetSummary = getBudgetSummary();
     
     const workPlanDetails: string[] = [];
-    const monthlyTargetItems: MonthlyTargetItem[] = [];
 
     const budgetAllocationItems = budgetItems.map(item => {
-      // Only process monthly targets in edit mode (when we have all 7 steps)
-      if (editProjectId) {
+      // Process monthly targets for the budget item
+      const monthlyTargets = [];
+      
+      if (startDate && endDate) {
         getMonthsBetweenDates().forEach(month => {
           const monthlyTarget = item.monthlyTargets?.[month] || { target: 0, description: '' };
           
           if (monthlyTarget.target > 0 || monthlyTarget.description.trim() !== '') {
             const targetMonth = new Date(month);
             
+            // Add to work plan details
             if (monthlyTarget.description.trim() !== '') {
-              workPlanDetails.push(`${month} - ${item.itemName}: ${monthlyTarget.description}`);
+              workPlanDetails.push(`${month}: ${monthlyTarget.description}`);
             }
             
-            monthlyTargetItems.push({
-              budgetAllocationItemSrNo: item.srNo.toString(),
+            // Add to monthly targets array for this budget item
+            monthlyTargets.push({
               targetMonth: format(targetMonth, "yyyy-MM-dd"),
               plannedTarget: monthlyTarget.target || 0,
               targetDescription: monthlyTarget.description.trim() || `No specific target set for ${month.split(' ')[0].toUpperCase()} ${month.split(' ')[1]}`
@@ -1517,30 +1584,29 @@ const handleSubmit = async () => {
         ngoContribution: item.ngoContribution,
         governmentContribution: item.governmentContribution,
         beneficiaryContribution: item.beneficiaryContribution,
-        budgetType: item.budgetType
+        budgetType: item.budgetType,
+        monthlyTargets: monthlyTargets // Include monthly targets directly in budget item
       };
     });
 
     const projectDprValue = uploadedDprUrl;
 
-    // ✅ FIXED: Ensure all required fields are included
+    // ✅ UPDATED: Match the desired payload format exactly
     const payload = {
-      projectType: projectData.projectType === "thematic" ? "Thematic" : "IVDP",
+      projectType: projectData.theme, // Use theme or default
       projectHead: projectData.projectHead,
       projectName: projectData.name,
       projectTheme: projectData.theme,
-      ngoId: selectedNgoId,
-      projectNgoPartnerName: projectData.ngoPartner,
       expectedBeneficiaries: projectData.beneficiaries,
       projectLocation: projectData.location,
       projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
-      projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null, // ✅ CRITICAL FIX: This was missing
+      projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
       projectDescription: projectData.description,
       projectObjectives: projectData.objectives,
       projectdpr: projectDprValue,
       projectStatus: "Planned",
-      projectManagerId: 1,
-
+      
+      // Budget section - simplified to match desired format
       budget: {
         procurementCost: budgetSummary.procurementCost || 0,
         trainingCost: budgetSummary.trainingCost || 0,
@@ -1550,9 +1616,6 @@ const handleSubmit = async () => {
         adminCost: budgetSummary.adminCost || 0,
         managementAndCoordinationCost: budgetSummary.managementAndCoordinationCost || 0,
         governmentConvergenceCost: budgetSummary.governmentConvergenceCost || 0,
-        ...(projectData.projectType === 'integrated_village_development' && {
-          investmentCost: budgetSummary.investmentCost || 0
-        }),
         totalBudget: getTotalAllocation(),
         totalCmsContribution: budgetItems.reduce((sum, item) => sum + item.cmsContribution, 0),
         totalNgoContribution: budgetItems.reduce((sum, item) => sum + item.ngoContribution, 0),
@@ -1560,17 +1623,22 @@ const handleSubmit = async () => {
         totalBeneficiaryContribution: budgetItems.reduce((sum, item) => sum + item.beneficiaryContribution, 0)
       },
 
+      // Work plan section - simplified format
       workPlan: {
         workPlanDetails: workPlanDetails.join("\n")
       },
 
+      // Budget allocation items with embedded monthly targets
       budgetAllocationItems: budgetAllocationItems,
 
-      // Only include monthly targets in edit mode
-      ...(editProjectId && {
-        monthlyTargetItems: monthlyTargetItems
-      }),
+      // Remove these fields that are not in desired format:
+      // - ngoId
+      // - projectNgoPartnerName  
+      // - projectManagerId
+      // - monthlyTargetItems (separate array)
+      // - subProjects (if not IVDP)
 
+      // Only include subProjects for IVDP type
       ...(projectData.projectType === 'integrated_village_development' && {
         subProjects: subProjects.map((sub, index) => ({
           id: sub.id,
@@ -1589,7 +1657,7 @@ const handleSubmit = async () => {
     let response;
     if (editProjectId) {
       console.log(`🔄 Updating existing project with ID: ${editProjectId}`);
-      response = await api.put(`/api/projects/${editProjectId}`, payload);
+      response = await api.put(`/api/projects/${editProjectId}/updateNestedDirect`, payload);
     } else {
       console.log("🆕 Creating new project");
       response = await api.post("/api/projects", payload);
@@ -1676,6 +1744,7 @@ const handleSubmit = async () => {
           
           {isLastStep ? (
             <Button 
+              type="button" 
               onClick={handleSubmit} 
               className="bg-success hover:bg-success/90"
               disabled={isSubmitting || isSubmitted}
