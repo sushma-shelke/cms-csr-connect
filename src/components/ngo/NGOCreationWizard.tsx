@@ -677,16 +677,13 @@ import { cn } from "@/lib/utils";
 import { createNgos, updateNgos } from "@/api/ngo";
 
 const DOCUMENT_UPLOAD_URL = "https://mumbailocal.org:8089/upload/documents";
-// Try common field names in order until server accepts
 const UPLOAD_FIELD_CANDIDATES = ["documents", "file", "files", "document", "documents[]"];
 const UPLOAD_TIMEOUT_MS = 30000;
 
 const uploadDocumentTryKeys = async (file: File) => {
-  // returns { success, url?, tried: string, responseRaw?, status?, message? }
   for (const key of UPLOAD_FIELD_CANDIDATES) {
     const form = new FormData();
     form.append(key, file);
-    // Try POST
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
@@ -698,14 +695,11 @@ const uploadDocumentTryKeys = async (file: File) => {
       try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
 
       if (resp.ok) {
-        // Expected shape: { status: 200, uploadedUrls: [...] }
         if (json && json.status === 200 && Array.isArray(json.uploadedUrls) && json.uploadedUrls.length > 0) {
           return { success: true, url: json.uploadedUrls[0], tried: key, responseRaw: json, status: resp.status };
         }
-        // if ok but shape unexpected - return as failure with raw
         return { success: false, tried: key, responseRaw: json ?? text, status: resp.status, message: "Upload response did not contain uploadedUrls" };
       } else {
-        // non-2xx status - include parsed body if possible
         const message = json?.message || json?.error || text || `HTTP ${resp.status}`;
         console.warn(`[upload] tried key='${key}' => HTTP ${resp.status}: ${message}`);
       }
@@ -721,15 +715,15 @@ const uploadDocumentTryKeys = async (file: File) => {
   };
 };
 
-// --- Step & Fields config (full original fields restored) ---
+// Updated step configuration with proper data types and placeholders
 const ngoSteps = [
   {
     label: "Basic Details",
     fields: [
-      { name: "name", label: "Organization Name", type: "text", required: true },
-      { name: "location", label: "Location", type: "text", required: true },
-      { name: "founder", label: "Name of Founder", type: "text", required: true },
-      { name: "registrationDetails", label: "Registration Details", type: "text", required: true },
+      { name: "ngoName", label: "Organization Name", type: "text", required: true, placeholder: "Enter organization name (text)" },
+      { name: "location", label: "Location", type: "text", required: true, placeholder: "Enter location (text)" },
+      { name: "founder", label: "Name of Founder", type: "text", required: true, placeholder: "Enter founder name (text)" },
+      { name: "registrationDetails", label: "Registration Details", type: "text", required: true, placeholder: "Enter registration details (text)" },
       { name: "registrationDate", label: "Date of Registration", type: "date", required: true },
       { name: "statutoryDocs", label: "Statutory Documents (FCRA/80G/35AC/12A/CSR)", type: "yesNoDocument", required: true }
     ]
@@ -737,23 +731,23 @@ const ngoSteps = [
   {
     label: "Legal & Financial",
     fields: [
-      { name: "panCard", label: "PAN Card Available", type: "yesNoDocument", required: true },
+      { name: "pancard", label: "PAN Card Available", type: "yesNoDocument", required: true },
       { name: "certificateValidity", label: "Certificate of Exemption Validity", type: "yesNoDocument" },
-      { name: "exemptionDetails", label: "Exemption Details", type: "text" },
+      { name: "exemptionDetails", label: "Exemption Details", type: "text", placeholder: "Enter exemption details (text)" },
       { name: "auditedStatements", label: "Previous Three Years Audited Statements Available", type: "yesNoDocument" },
       { name: "mou", label: "MOU/MOA/Trust Deed Available", type: "yesNoDocument" },
-      { name: "orgBudget", label: "Organization Budget (Last FY)", type: "number" },
-      { name: "totalExpenses", label: "Total Expenses (Last FY)", type: "number" },
-      { name: "incomeVsExpenditure", label: "Income vs Expenditure (Last 3 Years)", type: "text" },
-      { name: "directProgrammeSpend", label: "Spend on Direct Programme Costs (Last FY)", type: "number" },
-      { name: "fixedAssets", label: "Fixed Assets Owned", type: "text" }
+      { name: "orgBudget", label: "Organization Budget (Last FY)", type: "number", placeholder: "Enter amount (number)" },
+      { name: "totalExpenses", label: "Total Expenses (Last FY)", type: "number", placeholder: "Enter amount (number)" },
+      { name: "incomeVsExpenditure", label: "Income vs Expenditure (Last 3 Years)", type: "text", placeholder: "Describe income vs expenditure (text)" },
+      { name: "directProgrammeSpend", label: "Spend on Direct Programme Costs (Last FY)", type: "number", placeholder: "Enter amount (number)" },
+      { name: "fixedAssets", label: "Fixed Assets Owned", type: "text", placeholder: "List fixed assets (text)" }
     ]
   },
   {
     label: "Activities & Advocacy",
     fields: [
       { name: "religiousAgenda", label: "Promotes Religious/Spiritual Agenda?", type: "yesNo", conditionalField: "agendaDetails" },
-      { name: "agendaDetails", label: "If Yes, How?", type: "text", conditional: true },
+      { name: "agendaDetails", label: "If Yes, How?", type: "text", conditional: true, placeholder: "Describe religious agenda (text)" },
       { name: "beneficiaryCaste", label: "Beneficiaries Specific to Any Religion/Caste/Culture?", type: "yesNo" },
       { name: "politicalNature", label: "Are Activities Political/Religious/Spiritual?", type: "yesNo" },
       { name: "socialAdvocacy", label: "Addresses Issues of Social Advocacy?", type: "yesNo" },
@@ -765,36 +759,36 @@ const ngoSteps = [
   {
     label: "Governance & Staffing",
     fields: [
-      { name: "governingBody", label: "Governing Body/Trustee Involvement?", type: "yesNo", conditionalField: "governingDetails" },
-      { name: "governingDetails", label: "If Yes, How?", type: "text", conditional: true },
+      { name: "governingBody", label: "Governing Body/Trustee Involvement?", type: "yesNo" },
+      { name: "governingDetails", label: "Governing Details Available?", type: "yesNo" }, // Boolean field
       { name: "relatedMembers", label: "Are any Members Related?", type: "yesNo", conditionalField: "relationsSpecify" },
-      { name: "relationsSpecify", label: "Specify Relations", type: "text", conditional: true },
-      { name: "meetingFrequency", label: "Frequency of Governing Body Meetings", type: "text" },
-      { name: "fullTimeEmployees", label: "Full-time Employees (How Many?)", type: "number" },
-      { name: "partTimeEmployees", label: "Part-time Employees (How Many?)", type: "number" },
-      { name: "skilledStaff", label: "Number of Skilled/Trained Staff", type: "number" },
+      { name: "relationsSpecify", label: "Specify Relations", type: "text", conditional: true, placeholder: "Specify member relations (text)" },
+      { name: "meetingFrequency", label: "Frequency of Governing Body Meetings", type: "text", placeholder: "Enter meeting frequency (text)" },
+      { name: "fullTimeEmployees", label: "Full-time Employees (How Many?)", type: "number", placeholder: "Enter number of employees (number)" },
+      { name: "partTimeEmployees", label: "Part-time Employees (How Many?)", type: "number", placeholder: "Enter number of employees (number)" },
+      { name: "skilledStaff", label: "Number of Skilled/Trained Staff", type: "number", placeholder: "Enter number of staff (number)" },
       { name: "trainedPersonnel", label: "Trained/Experienced Progress Reporting Staff?", type: "yesNo" },
       { name: "definedRoles", label: "Defined Roles & Responsibilities?", type: "yesNo" },
-      { name: "avgStaffExperience", label: "Average Staff Experience (Years)", type: "number" },
-      { name: "staffTraining", label: "Staff Training Details & Frequency", type: "text" },
+      { name: "avgStaffExperience", label: "Average Staff Experience (Years)", type: "number", placeholder: "Enter years (number)" },
+      { name: "staffTraining", label: "Staff Training Details & Frequency", type: "text", placeholder: "Describe staff training (text)" },
       { name: "volunteerOpportunities", label: "Structured Volunteer Opportunities?", type: "yesNo" }
     ]
   },
   {
     label: "Funding & Outreach",
     fields: [
-      { name: "fundingSources", label: "Major Sources of Funding", type: "text" },
-      { name: "individualDonors", label: "Individual Donors? If Yes, Mention", type: "yesNoText" },
-      { name: "corporateFunders", label: "Corporate Funders? If Yes, Mention", type: "yesNoText" },
-      { name: "govtFunders", label: "Government Funding? If Yes, Mention", type: "yesNoText" },
-      { name: "otherAgencies", label: "Funding from Agencies/Trusts? If Yes, Mention", type: "yesNoText" },
-      { name: "otherSources", label: "Other Funding Sources? If Yes, Mention", type: "yesNoText" },
-      { name: "mainObjective", label: "Main Objective of Organisation/Trust", type: "text" },
-      { name: "targetBeneficiaries", label: "Target Beneficiaries (Specify)", type: "text" },
-      { name: "percentLowSEB", label: "Percent Beneficiaries from Low Socio-economic Background", type: "number" },
-      { name: "totalOutreach", label: "Total Outreach (Last FY)", type: "number" },
-      { name: "costPerBeneficiary", label: "Cost per Beneficiary (Flagship Project)", type: "number" },
-      { name: "areasOfIntervention", label: "Areas of Intervention (Flagship Project)", type: "text" }
+      { name: "fundingSources", label: "Major Sources of Funding", type: "text", placeholder: "Describe funding sources (text)" },
+      { name: "individualDonors", label: "Individual Donors?", type: "yesNoText" },
+      { name: "corporateFunders", label: "Corporate Funders?", type: "yesNoText" },
+      { name: "govtFunders", label: "Government Funding?", type: "yesNoText" },
+      { name: "otherAgencies", label: "Funding from Agencies/Trusts?", type: "yesNoText" },
+      { name: "otherSources", label: "Other Funding Sources?", type: "yesNoText" },
+      { name: "mainObjective", label: "Main Objective of Organisation/Trust", type: "text", placeholder: "Describe main objective (text)" },
+      { name: "targetedBeneficiaries", label: "Target Beneficiaries (Specify)", type: "text", placeholder: "Describe target beneficiaries (text)" },
+      { name: "percentLowSEB", label: "Percent Beneficiaries from Low Socio-economic Background", type: "number", placeholder: "Enter percentage (number)" },
+      { name: "totalOutReach", label: "Total Outreach (Last FY)", type: "number", placeholder: "Enter number of people (number)" },
+      { name: "costPerBeneficiary", label: "Cost per Beneficiary (Flagship Project)", type: "number", placeholder: "Enter amount (number)" },
+      { name: "areasOfIntervention", label: "Areas of Intervention (Flagship Project)", type: "text", placeholder: "Describe areas of intervention (text)" }
     ]
   },
   {
@@ -818,7 +812,13 @@ const getInitialFormData = (data?: any) => {
       result[`${field.name}File`] = data?.[`${field.name}File`] ?? null;
     } else if (field.type === "yesNoText") {
       result[field.name] = data?.[field.name] ?? "";
-      result[`${field.name}Text`] = data?.[`${field.name}Details`] ?? data?.[`${field.name}Text`] ?? "";
+      // Map to correct field names from Java entity
+      const detailsFieldName = field.name === "individualDonors" ? "individualDonorsDetails" :
+                              field.name === "corporateFunders" ? "corporateFunderDetails" :
+                              field.name === "govtFunders" ? "govtFundersDetails" :
+                              field.name === "otherAgencies" ? "otherAgenciesDetails" :
+                              field.name === "otherSources" ? "otherSourcesDetails" : `${field.name}Text`;
+      result[detailsFieldName] = data?.[detailsFieldName] ?? "";
     } else if (field.type === "date") {
       result[field.name] = data?.[field.name] ? new Date(data[field.name]) : undefined;
     } else {
@@ -861,7 +861,6 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
       return;
     }
 
-    // Try multiple keys
     const res = await uploadDocumentTryKeys(file);
 
     if (res.success) {
@@ -882,7 +881,6 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
   };
 
   const renderField = (field: any) => {
-    // conditional handling: show conditional field only when parent is yes
     if (field.conditional) {
       const parent = ngoSteps.flatMap(s => s.fields).find((f: any) => f.name === field.conditionalField);
       if (parent && formData[parent.name] !== "yes") return null;
@@ -892,8 +890,15 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
       case "text":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}{field.required && <span className="text-destructive">*</span>}</Label>
-            <Input id={field.name} value={formData[field.name] ?? ""} onChange={(e) => handleFieldChange(field.name, e.target.value)} placeholder={`Enter ${field.label}`} />
+            <Label htmlFor={field.name}>
+              {field.label}{field.required && <span className="text-destructive">*</span>}
+            </Label>
+            <Input 
+              id={field.name} 
+              value={formData[field.name] ?? ""} 
+              onChange={(e) => handleFieldChange(field.name, e.target.value)} 
+              placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+            />
           </div>
         );
 
@@ -901,19 +906,29 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
         return (
           <div className="space-y-2">
             <Label htmlFor={field.name}>{field.label}</Label>
-            <Input id={field.name} type="number" value={formData[field.name] === null || formData[field.name] === undefined ? "" : formData[field.name]} onChange={(e) => handleFieldChange(field.name, e.target.value)} placeholder="0" />
+            <Input 
+              id={field.name} 
+              type="number" 
+              value={formData[field.name] === null || formData[field.name] === undefined ? "" : formData[field.name]} 
+              onChange={(e) => handleFieldChange(field.name, e.target.value === "" ? "" : Number(e.target.value))} 
+              placeholder={field.placeholder || "Enter number"}
+              step="any"
+            />
+            <p className="text-xs text-muted-foreground">Enter numeric value</p>
           </div>
         );
 
       case "date":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
+            <Label htmlFor={field.name}>
+              {field.label}{field.required && <span className="text-destructive">*</span>}
+            </Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !formData[field.name] && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData[field.name] ? format(formData[field.name], "PPP") : "Pick a date"}
+                  {formData[field.name] ? format(formData[field.name], "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -926,35 +941,55 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
       case "yesNo":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.name}>{field.label}{field.required && <span className="text-destructive">*</span>}</Label>
+            <Label htmlFor={field.name}>
+              {field.label}{field.required && <span className="text-destructive">*</span>}
+            </Label>
             <Select value={formData[field.name] || ""} onValueChange={(v) => handleFieldChange(field.name, v)}>
-              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Yes or No" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="yes">Yes</SelectItem>
                 <SelectItem value="no">No</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">Select Yes or No (will be converted to true/false)</p>
           </div>
         );
 
       case "yesNoText": {
-        const textKey = `${field.name}Text`;
+        // Map to correct field names from Java entity
+        const detailsFieldName = field.name === "individualDonors" ? "individualDonorsDetails" :
+                                field.name === "corporateFunders" ? "corporateFunderDetails" :
+                                field.name === "govtFunders" ? "govtFundersDetails" :
+                                field.name === "otherAgencies" ? "otherAgenciesDetails" :
+                                field.name === "otherSources" ? "otherSourcesDetails" : `${field.name}Text`;
+        
         return (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor={field.name}>{field.label}</Label>
               <Select value={formData[field.name] || ""} onValueChange={(v) => handleFieldChange(field.name, v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Yes or No" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="yes">Yes</SelectItem>
                   <SelectItem value="no">No</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Select Yes or No (will be converted to true/false)</p>
             </div>
             {formData[field.name] === "yes" && (
               <div>
-                <Label htmlFor={textKey} className="text-sm">Please specify details</Label>
-                <Textarea id={textKey} value={formData[textKey] || ""} onChange={(e) => handleFieldChange(textKey, e.target.value)} className="min-h-[80px]" />
+                <Label htmlFor={detailsFieldName} className="text-sm">Please specify details</Label>
+                <Textarea 
+                  id={detailsFieldName} 
+                  value={formData[detailsFieldName] || ""} 
+                  onChange={(e) => handleFieldChange(detailsFieldName, e.target.value)} 
+                  className="min-h-[80px]" 
+                  placeholder="Enter details (text)"
+                />
               </div>
             )}
           </div>
@@ -970,14 +1005,19 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor={field.name}>{field.label}{field.required && <span className="text-destructive">*</span>}</Label>
+              <Label htmlFor={field.name}>
+                {field.label}{field.required && <span className="text-destructive">*</span>}
+              </Label>
               <Select value={formData[field.name] || ""} onValueChange={(v) => handleFieldChange(field.name, v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Yes or No" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="yes">Yes</SelectItem>
                   <SelectItem value="no">No</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Select Yes or No (will be converted to true/false)</p>
             </div>
 
             {formData[field.name] === "yes" && (
@@ -986,12 +1026,20 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
                   <div className="space-y-2">
                     <Label htmlFor={fileKey} className="text-sm">Upload Document</Label>
                     <div className="flex items-center gap-2">
-                      <Input id={fileKey} type="file" onChange={(e) => handleFileChange(field.name, e.target.files?.[0] || null)} disabled={status === "uploading"} className="text-sm" />
+                      <Input 
+                        id={fileKey} 
+                        type="file" 
+                        onChange={(e) => handleFileChange(field.name, e.target.files?.[0] || null)} 
+                        disabled={status === "uploading"} 
+                        className="text-sm" 
+                      />
                       <Upload className="h-4 w-4 text-muted-foreground" />
                     </div>
 
                     {status === "uploading" && (
-                      <p className="text-sm text-primary flex items-center gap-1"><RefreshCw className="h-3 w-3 animate-spin" /> Uploading...</p>
+                      <p className="text-sm text-primary flex items-center gap-1">
+                        <RefreshCw className="h-3 w-3 animate-spin" /> Uploading...
+                      </p>
                     )}
 
                     {status === "success" && uploadedUrl && (
@@ -1011,9 +1059,9 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => handleRetry(field.name)} disabled={!selectedFiles[field.name]}>Retry</Button>
                           <Button size="sm" variant="outline" onClick={() => {
-                            setSelectedFiles(prev => ({ ...prev, [field.name]: null }));
-                            setUploadStatuses(prev => ({ ...prev, [field.name]: "idle" }));
-                            setUploadDebug(prev => ({ ...prev, [field.name]: undefined }));
+                            setSelectedFiles(prev => ({ ...prev, [fieldName]: null }));
+                            setUploadStatuses(prev => ({ ...prev, [fieldName]: "idle" }));
+                            setUploadDebug(prev => ({ ...prev, [fieldName]: undefined }));
                             handleFieldChange(fileKey, null);
                           }}>Remove</Button>
                         </div>
@@ -1031,7 +1079,9 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
                     )}
 
                     {status !== "uploading" && !uploadedUrl && formData[fileKey] && (
-                      <p className="text-sm text-muted-foreground">Existing file: <a href={formData[fileKey]} target="_blank" rel="noreferrer" className="underline">{formData[fileKey].split("/").pop()}</a></p>
+                      <p className="text-sm text-muted-foreground">
+                        Existing file: <a href={formData[fileKey]} target="_blank" rel="noreferrer" className="underline">{formData[fileKey].split("/").pop()}</a>
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -1046,113 +1096,47 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
     }
   };
 
-  // Map into final payload structure (fields -> final keys)
+  // Build final payload with correct data type conversion
   const buildFinalNgoPayload = () => {
     const finalPayload: any = {};
-    const flatFields = ngoSteps.flatMap(s => s.fields);
-
-    for (const f of flatFields) {
-      const key = f.name;
-      const value = formData[key];
-
-      if (f.type === "date") {
-        finalPayload[key] = value ? format(value as Date, "yyyy-MM-dd") : null;
-        continue;
+    
+    ngoSteps.flatMap(s => s.fields).forEach(f => {
+      let val = formData[f.name];
+      
+      // Convert yes/no strings to boolean for Java entity
+      if (f.type === "yesNo" || f.type === "yesNoDocument") {
+        val = val === "yes" ? true : val === "no" ? false : val;
       }
-
-      if (f.type === "number") {
-        finalPayload[key] = value === "" || value === null ? null : parseFloat(value);
-        continue;
-      }
-
-      if (f.type === "yesNoDocument") {
-        finalPayload[key] = value === "yes" ? true : value === "no" ? false : value;
-        const fileKey = `${key}File`;
-        if (formData[fileKey]) finalPayload[fileKey] = formData[fileKey];
-        continue;
-      }
-
+      
+      // Convert yesNoText fields to boolean
       if (f.type === "yesNoText") {
-        finalPayload[key] = value === "yes" ? true : value === "no" ? false : value;
-        finalPayload[`${key}Details`] = formData[`${key}Text`] ?? "";
-        continue;
+        val = val === "yes" ? true : val === "no" ? false : val;
       }
-
-      finalPayload[key] = value;
-    }
-
-    // Example mapping into expected camelCase fields (customize if your backend expects different keys)
-    const mapped = {
-      ngoName: finalPayload.name,
-      location: finalPayload.location,
-      founder: finalPayload.founder,
-      registrationDetails: finalPayload.registrationDetails,
-      registrationDate: finalPayload.registrationDate,
-      statutoryDocs: finalPayload.statutoryDocs,
-      statutoryDocsFile: finalPayload.statutoryDocsFile,
-      panCard: finalPayload.panCard,
-      panCardFile: finalPayload.panCardFile,
-      certificateValidity: finalPayload.certificateValidity,
-      certificateValidityFile: finalPayload.certificateValidityFile,
-      exemptionDetails: finalPayload.exemptionDetails,
-      auditedStatements: finalPayload.auditedStatements,
-      auditedStatementsFile: finalPayload.auditedStatementsFile,
-      mou: finalPayload.mou,
-      mouFile: finalPayload.mouFile,
-      orgBudget: finalPayload.orgBudget,
-      totalExpenses: finalPayload.totalExpenses,
-      incomeVsExpenditure: finalPayload.incomeVsExpenditure,
-      directProgrammeSpend: finalPayload.directProgrammeSpend,
-      fixedAssets: finalPayload.fixedAssets,
-      religiousAgenda: finalPayload.religiousAgenda,
-      agendaDetails: finalPayload.agendaDetails,
-      beneficiaryCaste: finalPayload.beneficiaryCaste,
-      politicalNature: finalPayload.politicalNature,
-      socialAdvocacy: finalPayload.socialAdvocacy,
-      govtConflict: finalPayload.govtConflict,
-      humanRights: finalPayload.humanRights,
-      environmental: finalPayload.environmental,
-      governingBody: finalPayload.governingBody,
-      governingDetails: finalPayload.governingDetails,
-      relatedMembers: finalPayload.relatedMembers,
-      relationsSpecify: finalPayload.relationsSpecify,
-      meetingFrequency: finalPayload.meetingFrequency,
-      fullTimeEmployees: finalPayload.fullTimeEmployees,
-      partTimeEmployees: finalPayload.partTimeEmployees,
-      skilledStaff: finalPayload.skilledStaff,
-      trainedPersonnel: finalPayload.trainedPersonnel,
-      definedRoles: finalPayload.definedRoles,
-      avgStaffExperience: finalPayload.avgStaffExperience,
-      staffTraining: finalPayload.staffTraining,
-      volunteerOpportunities: finalPayload.volunteerOpportunities,
-      fundingSources: finalPayload.fundingSources,
-      individualDonors: finalPayload.individualDonors,
-      individualDonorsDetails: finalPayload.individualDonorsDetails,
-      corporateFunders: finalPayload.corporateFunders,
-      corporateFunderDetails: finalPayload.corporateFundersDetails,
-      govtFunders: finalPayload.govtFunders,
-      govtFundersDetails: finalPayload.govtFundersDetails,
-      otherAgencies: finalPayload.otherAgencies,
-      otherAgenciesDetails: finalPayload.otherAgenciesDetails,
-      otherSources: finalPayload.otherSources,
-      otherSourcesDetails: finalPayload.otherSourcesDetails,
-      mainObjective: finalPayload.mainObjective,
-      targetedBeneficiaries: finalPayload.targetBeneficiaries,
-      percentLowSEB: finalPayload.percentLowSEB,
-      totalOutReach: finalPayload.totalOutreach,
-      costPerBeneficiary: finalPayload.costPerBeneficiary,
-      areasOfIntervention: finalPayload.areasOfIntervention,
-      monWithinScheduleVII: finalPayload.monWithinScheduleVII,
-      monitoringMethods: finalPayload.monitoringMethods,
-      monitoringResponsibility: finalPayload.monitoringResponsibility,
-      externalEvaluation: finalPayload.externalEvaluation,
-      accreditation: finalPayload.accreditation,
-      networkMembership: finalPayload.networkMembership,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return mapped;
+      
+      // Convert number fields from string to number
+      if (f.type === "number" && val !== "" && val !== null && val !== undefined) {
+        val = Number(val);
+      }
+      
+      finalPayload[f.name] = val;
+      
+      // Handle file fields
+      if (f.type === "yesNoDocument") {
+        finalPayload[`${f.name}File`] = formData[`${f.name}File`];
+      }
+      
+      // Handle details fields for yesNoText types
+      if (f.type === "yesNoText") {
+        const detailsFieldName = f.name === "individualDonors" ? "individualDonorsDetails" :
+                                f.name === "corporateFunders" ? "corporateFunderDetails" :
+                                f.name === "govtFunders" ? "govtFundersDetails" :
+                                f.name === "otherAgencies" ? "otherAgenciesDetails" :
+                                f.name === "otherSources" ? "otherSourcesDetails" : `${f.name}Text`;
+        finalPayload[detailsFieldName] = formData[detailsFieldName];
+      }
+    });
+    
+    return finalPayload;
   };
 
   const handleSubmit = async () => {
@@ -1162,7 +1146,21 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
     }
 
     const payload = buildFinalNgoPayload();
-    console.log("[NGO Submit] payload:", payload);
+    console.log("[NGO Submit] Final payload:", payload);
+
+    // Validate required fields
+    const requiredFields = ngoSteps.flatMap(step => 
+      step.fields.filter(field => field.required).map(field => field.name)
+    );
+    
+    const missingFields = requiredFields.filter(field => 
+      !payload[field] || payload[field] === ""
+    );
+
+    if (missingFields.length > 0) {
+      alert(`Please fill in all required fields: ${missingFields.join(", ")}`);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -1186,7 +1184,6 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
     }
   };
 
-  // Build steps display with icons + one extra final review step
   const totalSteps = ngoSteps.length + 1;
   const steps = ngoSteps.map((s, i) => ({
     id: i + 1,
@@ -1196,7 +1193,6 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
   steps.push({ id: totalSteps, title: "Review & Submit", icon: "✅" });
 
   const renderStepContent = () => {
-    // final review step (new)
     if (currentStep === totalSteps) {
       return (
         <div className="space-y-6">
@@ -1215,13 +1211,12 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {step.fields.map((field: any) => {
-                      // Skip conditional fields if their parent field is not "yes"
                       const parentField = step.fields.find((f: any) => f.name === field.conditionalField);
                       if (field.conditional && parentField && formData[parentField.name] !== "yes") {
                         return null;
                       }
 
-                      let displayValue: any = (formData[field.name] ?? "").toString() || "Not provided";
+                      let displayValue: any = formData[field.name] ?? "Not provided";
 
                       if (field.type === "date" && formData[field.name]) {
                         displayValue = format(formData[field.name], "PPP");
@@ -1243,11 +1238,15 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
                       }
 
                       if (field.type === "yesNoText" && formData[field.name] === "yes") {
-                        const text = formData[`${field.name}Text`];
+                        const detailsFieldName = field.name === "individualDonors" ? "individualDonorsDetails" :
+                                                field.name === "corporateFunders" ? "corporateFunderDetails" :
+                                                field.name === "govtFunders" ? "govtFundersDetails" :
+                                                field.name === "otherAgencies" ? "otherAgenciesDetails" :
+                                                field.name === "otherSources" ? "otherSourcesDetails" : `${field.name}Text`;
+                        const text = formData[detailsFieldName];
                         displayValue = text ? `Yes (${text})` : "Yes (no details provided)";
                       }
 
-                      // For boolean-like yes/no when stored as 'yes'/'no'
                       if ((field.type === "yesNo" || field.type === "yesNoDocument" || field.type === "yesNoText") && (formData[field.name] === "yes" || formData[field.name] === "no")) {
                         if (!(field.type === "yesNoDocument" && formData[field.name] === "yes")) {
                           displayValue = formData[field.name] === "yes" ? "Yes" : "No";
@@ -1272,30 +1271,10 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
               </Card>
             ))}
           </div>
-
-          {/* Upload debug (keeps helpful debugging for uploads) */}
-          {/* <div className="mt-4">
-            <Card>
-              <CardHeader><CardTitle>Upload debug</CardTitle></CardHeader>
-              <CardContent>
-                {Object.keys(uploadDebug).length === 0 && <p className="text-sm text-muted-foreground">No uploads attempted yet.</p>}
-                {Object.entries(uploadDebug).map(([k, v]) => (
-                  <div key={k} className="mb-3">
-                    <div className="flex items-center justify-between">
-                      <strong>{k}</strong>
-                      <span className="text-xs text-muted-foreground">{uploadStatuses[k]}</span>
-                    </div>
-                    <pre className="text-xs bg-black/5 p-2 rounded max-h-44 overflow-auto">{typeof v === "string" ? v : JSON.stringify(v, null, 2)}</pre>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div> */}
         </div>
       );
     }
 
-    // Regular step content
     const stepData = ngoSteps[currentStep - 1];
     if (!stepData) return null;
 
@@ -1329,7 +1308,6 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
           <DialogTitle>{ngoId ? "Edit NGO Details" : "Register New NGO"}</DialogTitle>
         </DialogHeader>
 
-        {/* Progress Steps (icons instead of numbers) */}
         <div className="flex justify-between mb-8">
           {steps.map((s) => (
             <div key={s.id} className={cn("flex flex-col items-center space-y-2", currentStep >= s.id ? "text-primary" : "text-muted-foreground")}>
@@ -1341,12 +1319,10 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
           ))}
         </div>
 
-        {/* Step Content */}
         <div className="min-h-[400px]">
           {renderStepContent()}
         </div>
 
-        {/* Navigation */}
         <div className="flex justify-between pt-6 border-t">
           <Button
             variant="outline"
