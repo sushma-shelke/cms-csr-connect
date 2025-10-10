@@ -1048,113 +1048,16 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
 
   // Map into final payload structure (fields -> final keys)
   const buildFinalNgoPayload = () => {
-    const finalPayload: any = {};
-    const flatFields = ngoSteps.flatMap(s => s.fields);
-
-    for (const f of flatFields) {
-      const key = f.name;
-      const value = formData[key];
-
-      if (f.type === "date") {
-        finalPayload[key] = value ? format(value as Date, "yyyy-MM-dd") : null;
-        continue;
-      }
-
-      if (f.type === "number") {
-        finalPayload[key] = value === "" || value === null ? null : parseFloat(value);
-        continue;
-      }
-
-      if (f.type === "yesNoDocument") {
-        finalPayload[key] = value === "yes" ? true : value === "no" ? false : value;
-        const fileKey = `${key}File`;
-        if (formData[fileKey]) finalPayload[fileKey] = formData[fileKey];
-        continue;
-      }
-
-      if (f.type === "yesNoText") {
-        finalPayload[key] = value === "yes" ? true : value === "no" ? false : value;
-        finalPayload[`${key}Details`] = formData[`${key}Text`] ?? "";
-        continue;
-      }
-
-      finalPayload[key] = value;
-    }
-
-    // Example mapping into expected camelCase fields (customize if your backend expects different keys)
-    const mapped = {
-      ngoName: finalPayload.name,
-      location: finalPayload.location,
-      founder: finalPayload.founder,
-      registrationDetails: finalPayload.registrationDetails,
-      registrationDate: finalPayload.registrationDate,
-      statutoryDocs: finalPayload.statutoryDocs,
-      statutoryDocsFile: finalPayload.statutoryDocsFile,
-      panCard: finalPayload.panCard,
-      panCardFile: finalPayload.panCardFile,
-      certificateValidity: finalPayload.certificateValidity,
-      certificateValidityFile: finalPayload.certificateValidityFile,
-      exemptionDetails: finalPayload.exemptionDetails,
-      auditedStatements: finalPayload.auditedStatements,
-      auditedStatementsFile: finalPayload.auditedStatementsFile,
-      mou: finalPayload.mou,
-      mouFile: finalPayload.mouFile,
-      orgBudget: finalPayload.orgBudget,
-      totalExpenses: finalPayload.totalExpenses,
-      incomeVsExpenditure: finalPayload.incomeVsExpenditure,
-      directProgrammeSpend: finalPayload.directProgrammeSpend,
-      fixedAssets: finalPayload.fixedAssets,
-      religiousAgenda: finalPayload.religiousAgenda,
-      agendaDetails: finalPayload.agendaDetails,
-      beneficiaryCaste: finalPayload.beneficiaryCaste,
-      politicalNature: finalPayload.politicalNature,
-      socialAdvocacy: finalPayload.socialAdvocacy,
-      govtConflict: finalPayload.govtConflict,
-      humanRights: finalPayload.humanRights,
-      environmental: finalPayload.environmental,
-      governingBody: finalPayload.governingBody,
-      governingDetails: finalPayload.governingDetails,
-      relatedMembers: finalPayload.relatedMembers,
-      relationsSpecify: finalPayload.relationsSpecify,
-      meetingFrequency: finalPayload.meetingFrequency,
-      fullTimeEmployees: finalPayload.fullTimeEmployees,
-      partTimeEmployees: finalPayload.partTimeEmployees,
-      skilledStaff: finalPayload.skilledStaff,
-      trainedPersonnel: finalPayload.trainedPersonnel,
-      definedRoles: finalPayload.definedRoles,
-      avgStaffExperience: finalPayload.avgStaffExperience,
-      staffTraining: finalPayload.staffTraining,
-      volunteerOpportunities: finalPayload.volunteerOpportunities,
-      fundingSources: finalPayload.fundingSources,
-      individualDonors: finalPayload.individualDonors,
-      individualDonorsDetails: finalPayload.individualDonorsDetails,
-      corporateFunders: finalPayload.corporateFunders,
-      corporateFunderDetails: finalPayload.corporateFundersDetails,
-      govtFunders: finalPayload.govtFunders,
-      govtFundersDetails: finalPayload.govtFundersDetails,
-      otherAgencies: finalPayload.otherAgencies,
-      otherAgenciesDetails: finalPayload.otherAgenciesDetails,
-      otherSources: finalPayload.otherSources,
-      otherSourcesDetails: finalPayload.otherSourcesDetails,
-      mainObjective: finalPayload.mainObjective,
-      targetedBeneficiaries: finalPayload.targetBeneficiaries,
-      percentLowSEB: finalPayload.percentLowSEB,
-      totalOutReach: finalPayload.totalOutreach,
-      costPerBeneficiary: finalPayload.costPerBeneficiary,
-      areasOfIntervention: finalPayload.areasOfIntervention,
-      monWithinScheduleVII: finalPayload.monWithinScheduleVII,
-      monitoringMethods: finalPayload.monitoringMethods,
-      monitoringResponsibility: finalPayload.monitoringResponsibility,
-      externalEvaluation: finalPayload.externalEvaluation,
-      accreditation: finalPayload.accreditation,
-      networkMembership: finalPayload.networkMembership,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    return mapped;
-  };
-
+const finalPayload: any = {};
+ngoSteps.flatMap(s => s.fields).forEach(f => {
+let val = formData[f.name];
+if (f.type === "yesNo") val = val === "yes";
+if (f.type === "yesNoDocument") val = val === "yes";
+finalPayload[f.name] = val;
+if (f.type === "yesNoDocument") finalPayload[`${f.name}File`] = formData[`${f.name}File`];
+});
+return finalPayload;
+};
   const handleSubmit = async () => {
     if (Object.values(uploadStatuses).includes("uploading")) {
       alert("Please wait for all uploads to finish before submitting.");
