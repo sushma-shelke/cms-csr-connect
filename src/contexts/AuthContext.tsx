@@ -38,10 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     
     try {
+      console.log('AuthContext: Logging in with email:', email);
       const response = await api.post('/api/auth/login', {
         email,
         password
       });
+
+      console.log('AuthContext: Login response:', response.data);
 
       if (response.data && response.data.token) {
         const { token, user: userData } = response.data;
@@ -58,16 +61,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           organization: userData.organization || 'CMS Foundation'
         };
         
+        console.log('AuthContext: User session created:', userSession);
         setUser(userSession);
         localStorage.setItem('cms_user', JSON.stringify(userSession));
         setIsLoading(false);
         return true;
       }
       
+      console.log('AuthContext: No token in response');
       setIsLoading(false);
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('AuthContext: Login error:', error);
       setIsLoading(false);
       return false;
     }
@@ -77,11 +82,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     
     try {
+      console.log('AuthContext: Verifying OTP for phone:', phoneNumber);
       const response = await api.post('/api/auth/verify-otp', {
         phoneNumber,
         otpCode: otp,
         deviceInfo
       });
+
+      console.log('AuthContext: OTP verification response:', response.data);
 
       if (response.data && response.data.token) {
         const { token, user: userData } = response.data;
@@ -98,16 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           organization: userData.organization || 'CMS Foundation'
         };
         
+        console.log('AuthContext: User session created:', userSession);
         setUser(userSession);
         localStorage.setItem('cms_user', JSON.stringify(userSession));
         setIsLoading(false);
         return true;
       }
       
+      console.log('AuthContext: No token in OTP response');
       setIsLoading(false);
       return false;
     } catch (error) {
-      console.error('OTP verification error:', error);
+      console.error('AuthContext: OTP verification error:', error);
       setIsLoading(false);
       return false;
     }

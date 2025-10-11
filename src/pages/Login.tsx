@@ -440,7 +440,10 @@ export default function Login() {
         return;
       }
 
+      console.log('Attempting email login...');
       const success = await login(email, password);
+      console.log('Login result:', success);
+      
       if (!success) {
         setError('Invalid email or password');
         toast({
@@ -449,6 +452,7 @@ export default function Login() {
           variant: "destructive",
         });
       } else {
+        console.log('Login successful, navigating to dashboard...');
         toast({
           title: "Welcome to CMS Foundation MIS",
           description: "You have successfully logged in.",
@@ -627,10 +631,15 @@ const handleVerifyOtp = async () => {
     const deviceInfo = `${navigator.platform} ${navigator.userAgent}`;
     const formattedPhoneNumber = formatPhoneNumber(mobile);
     
+    console.log('Attempting OTP verification...', { phoneNumber: formattedPhoneNumber, otp });
+    
     // Use loginWithOtp from auth context
     const success = await loginWithOtp(formattedPhoneNumber, otp, deviceInfo);
+    
+    console.log('OTP verification result:', success);
 
     if (success) {
+      console.log('OTP verification successful, navigating to dashboard...');
       toast({
         title: "Login Successful",
         description: "You have successfully logged in with OTP.",
