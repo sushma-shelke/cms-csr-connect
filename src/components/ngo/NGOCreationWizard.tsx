@@ -882,7 +882,7 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
 
   const renderField = (field: any) => {
     if (field.conditional) {
-      const parent = ngoSteps.flatMap(s => s.fields).find((f: any) => f.name === field.conditionalField);
+      const parent: any = ngoSteps.flatMap((s: any) => s.fields).find((f: any) => f.name === field.conditionalField);
       if (parent && formData[parent.name] !== "yes") return null;
     }
 
@@ -1059,9 +1059,9 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
                         <div className="flex gap-2">
                           <Button size="sm" onClick={() => handleRetry(field.name)} disabled={!selectedFiles[field.name]}>Retry</Button>
                           <Button size="sm" variant="outline" onClick={() => {
-                            setSelectedFiles(prev => ({ ...prev, [fieldName]: null }));
-                            setUploadStatuses(prev => ({ ...prev, [fieldName]: "idle" }));
-                            setUploadDebug(prev => ({ ...prev, [fieldName]: undefined }));
+                            setSelectedFiles(prev => ({ ...prev, [field.name]: null }));
+                            setUploadStatuses(prev => ({ ...prev, [field.name]: "idle" }));
+                            setUploadDebug(prev => ({ ...prev, [field.name]: undefined }));
                             handleFieldChange(fileKey, null);
                           }}>Remove</Button>
                         </div>
@@ -1100,7 +1100,7 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
   const buildFinalNgoPayload = () => {
     const finalPayload: any = {};
     
-    ngoSteps.flatMap(s => s.fields).forEach(f => {
+    ngoSteps.flatMap((s: any) => s.fields).forEach((f: any) => {
       let val = formData[f.name];
       
       // Convert yes/no strings to boolean for Java entity
@@ -1150,7 +1150,7 @@ export function NGOCreationWizard({ open, onOpenChange, onSubmit, initialData, n
 
     // Validate required fields
     const requiredFields = ngoSteps.flatMap(step => 
-      step.fields.filter(field => field.required).map(field => field.name)
+      step.fields.filter((field: any) => field.required).map((field: any) => field.name)
     );
     
     const missingFields = requiredFields.filter(field => 

@@ -427,7 +427,7 @@ export default function Login() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const { login, isLoading } = useAuth();
+  const { login, loginWithOtp, isLoading } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -449,12 +449,12 @@ export default function Login() {
           variant: "destructive",
         });
       } else {
-                navigate('/');
-
         toast({
           title: "Welcome to CMS Foundation MIS",
           description: "You have successfully logged in.",
         });
+        // Redirect to dashboard
+        navigate('/');
       }
     } else {
       // OTP login flow
@@ -626,57 +626,22 @@ const handleVerifyOtp = async () => {
   try {
     const deviceInfo = `${navigator.platform} ${navigator.userAgent}`;
     const formattedPhoneNumber = formatPhoneNumber(mobile);
+    
+    // Use loginWithOtp from auth context
+    const success = await loginWithOtp(formattedPhoneNumber, otp, deviceInfo);
 
-    // STEP 1: Verify OTP
-    const verifyResponse = await fetch('https://mumbailocal.org:8089/api/auth/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phoneNumber: formattedPhoneNumber,
-        otpCode: otp,
-        deviceInfo: deviceInfo,
-      }),
-    });
-
-    const verifyData = await verifyResponse.json();
-
-    if (!verifyResponse.ok || !verifyData?.jwtToken) {
-      setError(verifyData.message || 'Invalid OTP');
-      toast({
-        title: "OTP Verification Failed",
-        description: verifyData.message || "Invalid OTP. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // ✅ Save JWT Token in Local Storage
-    localStorage.setItem('jwtToken', verifyData.jwtToken);
-
-    // STEP 2: Validate Token
-    const validateResponse = await fetch('https://mumbailocal.org:8089/api/auth/validate-token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${verifyData.jwtToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const validateData = await validateResponse.json();
-
-    if (validateResponse.ok) {
+    if (success) {
       toast({
         title: "Login Successful",
-        description: "You have successfully logged in.",
+        description: "You have successfully logged in with OTP.",
       });
-
-      // ✅ Redirect to home page
+      // Redirect to dashboard
       navigate('/');
     } else {
-      setError(validateData.message || 'Token validation failed');
+      setError('Invalid OTP or verification failed');
       toast({
-        title: "Session Error",
-        description: "Token validation failed. Please login again.",
+        title: "OTP Verification Failed",
+        description: "Invalid OTP. Please try again.",
         variant: "destructive",
       });
     }
