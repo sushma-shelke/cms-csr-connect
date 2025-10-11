@@ -10,15 +10,15 @@ export const getProjectById = async (id: number) => {
   return res.data;
 };
 
-export const createProject = async (project: unknown) => {
-  const res = await api.post("/api/projects", project);
-  return res.data;
-};
+// export const createProject = async (project: unknown) => {
+//   const res = await api.post("/api/projects", project);
+//   return res.data;
+// };
 
-export const updateProject = async (id: number, project: unknown) => {
-  const res = await api.put(`/api/projects/${id}`, project);
-  return res.data;
-};
+// export const updateProject = async (id: number, project: unknown) => {
+//   const res = await api.put(`/api/projects/${id}`, project);
+//   return res.data;
+// };
 
 export const deleteProject = async (id: number) => {
   const res = await api.delete(`/api/projects/${id}`);
