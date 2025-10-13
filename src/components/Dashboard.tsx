@@ -162,7 +162,7 @@ export function Dashboard() {
                   formatter={(value: number) => [`₹${value / 100000}L`, ""]}
                   labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Bar dataKey="budget" fill="hsl(var(--muted))" name="Budget" />
+                <Bar dataKey="budget" fill="#FFC973C5" name="Budget" />
                 <Bar dataKey="spent" fill="hsl(var(--primary))" name="Spent" />
               </BarChart>
             </ResponsiveContainer>
