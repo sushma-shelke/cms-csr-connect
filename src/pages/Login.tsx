@@ -427,7 +427,7 @@ export default function Login() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const { login, loginWithOtp, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -440,10 +440,7 @@ export default function Login() {
         return;
       }
 
-      console.log('Attempting email login...');
       const success = await login(email, password);
-      console.log('Login result:', success);
-      
       if (!success) {
         setError('Invalid email or password');
         toast({
@@ -452,13 +449,12 @@ export default function Login() {
           variant: "destructive",
         });
       } else {
-        console.log('Login successful, navigating to dashboard...');
+                navigate('/');
+
         toast({
           title: "Welcome to CMS Foundation MIS",
           description: "You have successfully logged in.",
         });
-        // Redirect to dashboard
-        navigate('/');
       }
     } else {
       // OTP login flow
@@ -630,27 +626,57 @@ const handleVerifyOtp = async () => {
   try {
     const deviceInfo = `${navigator.platform} ${navigator.userAgent}`;
     const formattedPhoneNumber = formatPhoneNumber(mobile);
-    
-    console.log('Attempting OTP verification...', { phoneNumber: formattedPhoneNumber, otp });
-    
-    // Use loginWithOtp from auth context
-    const success = await loginWithOtp(formattedPhoneNumber, otp, deviceInfo);
-    
-    console.log('OTP verification result:', success);
 
-    if (success) {
-      console.log('OTP verification successful, navigating to dashboard...');
-      toast({
-        title: "Login Successful",
-        description: "You have successfully logged in with OTP.",
-      });
-      // Redirect to dashboard
-      navigate('/');
-    } else {
-      setError('Invalid OTP or verification failed');
+    // STEP 1: Verify OTP
+    const verifyResponse = await fetch('https://mumbailocal.org:8089/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phoneNumber: formattedPhoneNumber,
+        otpCode: otp,
+        deviceInfo: deviceInfo,
+      }),
+    });
+
+    const verifyData = await verifyResponse.json();
+
+    if (!verifyResponse.ok || !verifyData?.jwtToken) {
+      setError(verifyData.message || 'Invalid OTP');
       toast({
         title: "OTP Verification Failed",
-        description: "Invalid OTP. Please try again.",
+        description: verifyData.message || "Invalid OTP. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ Save JWT Token in Local Storage
+    localStorage.setItem('jwtToken', verifyData.jwtToken);
+
+    // STEP 2: Validate Token
+    const validateResponse = await fetch('https://mumbailocal.org:8089/api/auth/validate-token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${verifyData.jwtToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const validateData = await validateResponse.json();
+
+    if (validateResponse.ok) {
+      toast({
+        title: "Login Successful",
+        description: "You have successfully logged in.",
+      });
+
+      // ✅ Redirect to home page
+      navigate('/');
+    } else {
+      setError(validateData.message || 'Token validation failed');
+      toast({
+        title: "Session Error",
+        description: "Token validation failed. Please login again.",
         variant: "destructive",
       });
     }
