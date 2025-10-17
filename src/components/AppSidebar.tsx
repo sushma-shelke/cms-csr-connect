@@ -32,15 +32,15 @@ const navigationItems = [
   { title: "Quick Updates", url: "/ngo-updates", icon: Clock },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "MIS Reports", url: "/mis-reports", icon: FileText },
-  { title: "Financial Tracking", url: "/finance", icon: IndianRupee },
+  // { title: "Financial Tracking", url: "/finance", icon: IndianRupee },
   // { title: "Media Evidence", url: "/media", icon: Camera },
 ];
 
 const thematicItems = [
-  { title: "Health", url: "/themes/health", icon: Heart },
-  { title: "Education", url: "/themes/education", icon: Users },
-  { title: "Climate Resilience", url: "/themes/climate", icon: BarChart3 },
-  { title: "Livelihood", url: "/themes/livelihood", icon: IndianRupee },
+  // { title: "Health", url: "/themes/health", icon: Heart },
+  // { title: "Education", url: "/themes/education", icon: Users },
+  // { title: "Climate Resilience", url: "/themes/climate", icon: BarChart3 },
+  // { title: "Livelihood", url: "/themes/livelihood", icon: IndianRupee },
 ];
 
 export function AppSidebar() {
@@ -99,7 +99,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Thematic Areas</SidebarGroupLabel>
+          {/* <SidebarGroupLabel>Thematic Areas</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu>
               {thematicItems.map((item) => (
