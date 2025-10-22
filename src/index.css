@@ -2,79 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modern Dashboard Design System - Light Theme inspired by reference image
-All colors MUST be HSL.
+/* World-Class Modern Dashboard Design System
+   Smooth animations, beautiful gradients, premium feel
 */
 
 @layer base {
   :root {
-    /* Light theme backgrounds - clean and modern */
-    --background: 0 0% 98%;
-    --foreground: 220 13% 18%;
+    /* Premium Light Theme */
+    --background: 240 20% 99%;
+    --foreground: 222 47% 11%;
 
-    /* Card system with subtle shadows */
+    /* Elevated Card System */
     --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary colors - vibrant purple/blue from reference */
+    /* Primary Brand - Modern Purple */
     --primary: 253 93% 63%;
     --primary-foreground: 0 0% 100%;
     --primary-hover: 253 93% 58%;
+    --primary-light: 253 93% 95%;
 
-    /* Secondary - light purple/blue */
+    /* Secondary Accent */
     --secondary: 250 100% 97%;
     --secondary-foreground: 253 93% 63%;
 
-    /* Muted backgrounds and text */
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    /* Muted Elements */
+    --muted: 240 20% 97%;
+    --muted-foreground: 222 13% 45%;
 
-    /* Accent colors from the reference dashboard */
-    --accent: 250 100% 97%;
-    --accent-foreground: 253 93% 63%;
+    /* Accent Highlights */
+    --accent: 253 93% 63%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 253 93% 95%;
 
-    /* Color palette for charts and metrics */
-    --chart-primary: 253 93% 63%;    /* Purple */
-    --chart-secondary: 33 100% 60%;  /* Orange */
-    --chart-accent-1: 315 100% 70%;  /* Pink */
-    --chart-accent-2: 175 100% 45%;  /* Teal */
-    --chart-accent-3: 142 72% 52%;   /* Green */
-    --chart-accent-4: 262 77% 52%;   /* Deep purple */
+    /* Rich Chart Palette */
+    --chart-primary: 253 93% 63%;
+    --chart-secondary: 33 100% 60%;
+    --chart-accent-1: 315 100% 70%;
+    --chart-accent-2: 175 70% 50%;
+    --chart-accent-3: 142 72% 52%;
+    --chart-accent-4: 262 77% 52%;
 
-    /* Status colors */
+    /* Status Colors */
     --success: 142 72% 52%;
     --success-foreground: 0 0% 100%;
+    --success-light: 142 72% 95%;
+    
     --warning: 33 100% 60%;
     --warning-foreground: 0 0% 100%;
+    --warning-light: 33 100% 95%;
+    
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 84% 95%;
 
-    /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --info-light: 217 91% 95%;
+
+    /* Refined Borders */
+    --border: 240 20% 92%;
+    --input: 240 20% 92%;
     --ring: 253 93% 63%;
 
-    /* Border radius for modern look */
-    --radius: 0.75rem;
+    /* Modern Radius */
+    --radius: 0.875rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Premium Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-glow: 0 0 20px rgb(111 73 248 / 0.15);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(253 93% 63%) 0%, hsl(262 77% 52%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142 72% 52%) 0%, hsl(175 70% 50%) 100%);
+    --gradient-warning: linear-gradient(135deg, hsl(33 100% 60%) 0%, hsl(315 100% 70%) 100%);
+    --gradient-info: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(253 93% 63%) 100%);
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Sidebar - Clean White with Subtle Elevation */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 253 93% 63%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 253 93% 97%;
+    --sidebar-accent-foreground: 253 93% 63%;
+    --sidebar-border: 240 20% 94%;
+    --sidebar-ring: 253 93% 63%;
+    --sidebar-active: 253 93% 63%;
+    --sidebar-active-foreground: 0 0% 100%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Smooth Transitions */
+    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
   .dark {
@@ -123,44 +148,109 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
   }
 }
-.text-white {
-  color: #fff !important ;
-  background-color: #80D763;
-}
 
-.text-\[\#e52464\] {
-    --tw-text-opacity: 1;
-    color:#6F49F8 !important ;
-}
+@layer utilities {
+  /* Glass Morphism Effects */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
 
-.border-\[\#e52464\] {
-    --tw-border-opacity: 1;
-    border-color: #6f49f8 !important ;
-}
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
 
-.hover\:bg-\[\#c41c53\]:hover {
-    --tw-bg-opacity: 1;
-    background-color: #6f49f8 !important ;
-}
+  /* Premium Hover Effects */
+  .hover-lift {
+    transition: var(--transition-smooth);
+  }
 
-.focus\:ring-\[\#e52464\]:focus {
-    --tw-ring-opacity: 1;
-    --tw-ring-color: #6f49f8 !important ;
-}
-.hover\:bg-sidebar-accent:hover{
-    background-color: #6f49f8 !important ;  
-}
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
 
-.bg-black\/30{
-    background-color: #ffffff !important ;
-}
+  .hover-scale {
+    transition: var(--transition-smooth);
+  }
 
-.data-\[state\=active\]\:text-foreground[data-state="active"]{
-      color: hsl(247.38deg 73.36% 64.53%) !important;
-}
-.data-\[state\=active\]\:bg-background[data-state="active"] {
-    background-color: hsl(232.62deg 87.19% 95.9%) !important ;
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+
+  .hover-glow {
+    transition: var(--transition-smooth);
+  }
+
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Smooth Animations */
+  .animate-in {
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Premium Card Styles */
+  .card-premium {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    border: 1px solid hsl(var(--border));
+    transition: var(--transition-smooth);
+  }
+
+  .card-premium:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(var(--primary) / 0.2);
+  }
+
+  /* Active States */
+  .nav-active {
+    background: hsl(var(--sidebar-active));
+    color: hsl(var(--sidebar-active-foreground));
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-inactive {
+    color: hsl(var(--sidebar-foreground));
+    transition: var(--transition-base);
+  }
+
+  .nav-inactive:hover {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+  }
 }

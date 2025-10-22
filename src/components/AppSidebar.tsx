@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import cmsLogo from "@/assets/cms-logo-1.png";
+import { cn } from "@/lib/utils";
 
 import {
   Sidebar,
@@ -60,36 +61,54 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r" style={{boxShadow:'2px 0px 8px #39373F27'}}>
-<SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">        
-  <div className="p-4 border-b border-border" >
-          <div className="flex items-center gap-3" >
-            <div className="w-10 h-10 flex items-center justify-center">
+    <Sidebar className="border-r border-sidebar-border bg-sidebar-background shadow-lg">
+      <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">        
+        {/* Modern Logo Header */}
+        <div className="p-6 border-b border-sidebar-border/50">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
               <img 
                 src={cmsLogo} 
                 alt="CMS Foundation" 
-                className="w-10 h-10 object-contain"
+                className="w-8 h-8 object-contain brightness-0 invert"
               />
             </div>
             {!isCollapsed && (
-              <div>
-                <h2 className="font-bold text-lg text-foreground">CMS Foundation</h2>
-                <p className="text-xs text-muted-foreground">CSR MIS Platform</p>
+              <div className="flex flex-col">
+                <h2 className="font-bold text-lg text-sidebar-foreground tracking-tight">
+                  CMS Foundation
+                </h2>
+                <p className="text-xs text-muted-foreground font-medium">
+                  CSR MIS Platform
+                </p>
               </div>
             )}
           </div>
         </div>
 
-        <SidebarGroup >
-          <SidebarGroupLabel>Main Navigation</SidebarGroupLabel>
+        {/* Navigation Menu */}
+        <SidebarGroup className="px-3 py-4">
+          <SidebarGroupLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
+            Main Navigation
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavClassName(item.url)}>
-                      <item.icon className="w-4 h-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                    <NavLink 
+                      to={item.url} 
+                      className={({ isActive }) => cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                        isActive 
+                          ? "bg-sidebar-active text-sidebar-active-foreground shadow-sm font-semibold" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      {!isCollapsed && (
+                        <span className="text-sm font-medium">{item.title}</span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -120,123 +120,131 @@ export function Dashboard() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-lg border">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          CSR Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Real-time monitoring of CSR initiatives and impact metrics across all programs
-        </p>
+    <div className="space-y-8 animate-in">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-transparent p-8 border border-primary/10">
+        <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,black)]" />
+        <div className="relative">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">
+            <span className="gradient-text">CSR Dashboard</span>
+          </h1>
+          <p className="text-base text-muted-foreground font-medium max-w-2xl">
+            Real-time monitoring of CSR initiatives and impact metrics across all programs
+          </p>
+        </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover-scale border-l-4 border-l-[#6F49F8] hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#6F49F8]">Total Budget</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-[#6F49F8]/10 flex items-center justify-center">
-              <IndianRupee className="h-5 w-5 text-[#6F49F8]" />
+      {/* Key Metrics - Premium Cards */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card variant="elevated" hover="lift" className="border-l-4 border-l-primary overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-primary">Total Budget</CardTitle>
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+              <IndianRupee className="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             {budgetLoading ? (
-              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-10 w-32" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-[#6F49F8] mb-1">
+                <div className="text-4xl font-bold text-primary">
                   ₹{totalBudget ? (totalBudget / 100000).toFixed(1) : 0}L
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">Utilization</span>
+                    <span className="font-semibold text-foreground">
+                      {budgetUtilized && totalBudget ? `${((budgetUtilized / totalBudget) * 100).toFixed(0)}%` : '0%'}
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-[#6F49F8] to-[#9F7AFA] transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-primary via-accent to-primary transition-all duration-700 ease-out"
                       style={{ width: `${budgetUtilized && totalBudget ? (budgetUtilized / totalBudget) * 100 : 0}%` }}
                     />
                   </div>
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {budgetUtilized && totalBudget ? `${((budgetUtilized / totalBudget) * 100).toFixed(0)}%` : '0%'}
-                  </span>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    ₹{budgetUtilized ? (budgetUtilized / 100000).toFixed(1) : 0}L utilized
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  ₹{budgetUtilized ? (budgetUtilized / 100000).toFixed(1) : 0}L utilized
-                </p>
               </>
             )}
           </CardContent>
         </Card>
         
-        <Card className="hover-scale border-l-4 border-l-[#8ECE33FF] hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#8ECE33FF]">Active Projects</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-[#8ECE33FF]/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-[#8ECE33FF]"/>
+        <Card variant="elevated" hover="lift" className="border-l-4 border-l-success overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-success">Active Projects</CardTitle>
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-success to-chart-accent-2 flex items-center justify-center shadow-md">
+              <TrendingUp className="h-6 w-6 text-white"/>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             {projectsLoading ? (
-              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-10 w-24" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-[#8ECE33FF] mb-1">{activeProjects}</div>
-                <p className="text-xs text-muted-foreground">
-                  out of <span className="font-semibold text-foreground">{projects?.length || 0}</span> total projects
+                <div className="text-4xl font-bold text-success">{activeProjects}</div>
+                <p className="text-sm text-muted-foreground font-medium">
+                  out of <span className="font-bold text-foreground">{projects?.length || 0}</span> total projects
                 </p>
-                <div className="mt-2 flex items-center gap-1 text-xs">
-                  <span className="text-[#8ECE33FF] font-medium">↑ {activeProjects}</span>
-                  <span className="text-muted-foreground">ongoing initiatives</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-success-light rounded-lg">
+                  <TrendingUp className="h-3.5 w-3.5 text-success" />
+                  <span className="text-xs font-semibold text-success">{activeProjects} ongoing</span>
                 </div>
               </>
             )}
           </CardContent>
         </Card>
         
-        <Card className="hover-scale border-l-4 border-l-[#FFB74BFF] hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#FFB74BFF]">Total Beneficiaries</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-[#FFB74BFF]/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-[#FFB74BFF]" />
+        <Card variant="elevated" hover="lift" className="border-l-4 border-l-warning overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-warning">Total Beneficiaries</CardTitle>
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-warning to-chart-accent-1 flex items-center justify-center shadow-md">
+              <Users className="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             {beneficiariesLoading ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-10 w-28" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-[#FFB74BFF] mb-1">
+                <div className="text-4xl font-bold text-warning">
                   {totalBeneficiaries?.toLocaleString() || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  across <span className="font-semibold text-foreground">{ngoPartners}</span> NGO partners
+                <p className="text-sm text-muted-foreground font-medium">
+                  across <span className="font-bold text-foreground">{ngoPartners}</span> NGO partners
                 </p>
-                <div className="mt-2 flex items-center gap-1 text-xs">
-                  <Heart className="h-3 w-3 text-[#FFB74BFF]" />
-                  <span className="text-muted-foreground">lives impacted</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-warning-light rounded-lg">
+                  <Heart className="h-3.5 w-3.5 text-warning" />
+                  <span className="text-xs font-semibold text-warning">lives impacted</span>
                 </div>
               </>
             )}
           </CardContent>
         </Card>
         
-        <Card className="hover-scale border-l-4 border-l-[#FF74DAFF] hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#FF74DAFF]">Reports Pending</CardTitle>
-            <div className="h-10 w-10 rounded-full bg-[#FF74DAFF]/10 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-[#FF74DAFF]" />
+        <Card variant="elevated" hover="lift" className="border-l-4 border-l-chart-accent-1 overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-semibold text-chart-accent-1">Reports Pending</CardTitle>
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-chart-accent-1 to-destructive flex items-center justify-center shadow-md">
+              <FileText className="h-6 w-6 text-white" />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             {analyticsLoading ? (
-              <Skeleton className="h-8 w-12" />
+              <Skeleton className="h-10 w-16" />
             ) : (
               <>
-                <div className="text-3xl font-bold text-[#FF74DAFF] mb-1">{pendingReports}</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="text-4xl font-bold text-chart-accent-1">{pendingReports}</div>
+                <p className="text-sm text-muted-foreground font-medium">
                   due by month end
                 </p>
-                <div className="mt-2 flex items-center gap-1 text-xs">
-                  <span className={pendingReports > 5 ? "text-destructive font-medium" : "text-[#FF74DAFF] font-medium"}>
-                    {pendingReports > 5 ? "⚠ Action needed" : "✓ On track"}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" 
+                     style={{ backgroundColor: pendingReports > 5 ? 'hsl(var(--destructive-light))' : 'hsl(var(--success-light))' }}>
+                  <span className={`text-xs font-semibold ${pendingReports > 5 ? 'text-destructive' : 'text-success'}`}>
+                    {pendingReports > 5 ? '⚠ Action needed' : '✓ On track'}
                   </span>
                 </div>
               </>
@@ -245,66 +253,72 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* Additional Analytics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="hover-scale hover:shadow-lg transition-all duration-300 border-t-4 border-t-primary">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <GraduationCap className="h-4 w-4 text-thematic-education" />
-              Education Theme
+      {/* Thematic Overview - Premium Cards */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card variant="gradient" hover="lift" className="border-t-4 border-t-primary">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-foreground">Education Theme</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {projectsLoading ? (
-              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-8 w-20" />
             ) : (
               <div className="space-y-2">
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold text-primary">
                   {themeCount?.["Education"] || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">active projects</p>
+                <p className="text-sm text-muted-foreground font-medium">active projects</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="hover-scale hover:shadow-lg transition-all duration-300 border-t-4 border-t-thematic-health">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Heart className="h-4 w-4 text-thematic-health" />
-              Health Theme
+        <Card variant="gradient" hover="lift" className="border-t-4 border-t-destructive">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <Heart className="h-5 w-5 text-destructive" />
+              </div>
+              <span className="text-foreground">Health Theme</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {projectsLoading ? (
-              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-8 w-20" />
             ) : (
               <div className="space-y-2">
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold text-destructive">
                   {themeCount?.["Health"] || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">active projects</p>
+                <p className="text-sm text-muted-foreground font-medium">active projects</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="hover-scale hover:shadow-lg transition-all duration-300 border-t-4 border-t-thematic-climate">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Leaf className="h-4 w-4 text-thematic-climate" />
-              Climate Theme
+        <Card variant="gradient" hover="lift" className="border-t-4 border-t-success">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-success/10 flex items-center justify-center">
+                <Leaf className="h-5 w-5 text-success" />
+              </div>
+              <span className="text-foreground">Climate Theme</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {projectsLoading ? (
-              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-8 w-20" />
             ) : (
               <div className="space-y-2">
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold text-success">
                   {themeCount?.["Climate Resilience"] || 0}
                 </div>
-                <p className="text-xs text-muted-foreground">active projects</p>
+                <p className="text-sm text-muted-foreground font-medium">active projects</p>
               </div>
             )}
           </CardContent>
@@ -313,13 +327,17 @@ export function Dashboard() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Budget vs Spending Chart */}
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <IndianRupee className="h-5 w-5 text-primary" />
-              Thematic Budget Utilization
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Budget allocation vs spending by theme</p>
+        <Card variant="elevated" hover="glow">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <IndianRupee className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold">Thematic Budget Utilization</CardTitle>
+                <p className="text-xs text-muted-foreground font-medium">Budget allocation vs spending by theme</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {projectsLoading ? (
@@ -360,13 +378,17 @@ export function Dashboard() {
         </Card>
 
         {/* Target Achievement */}
-        <Card className="hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Project Status Distribution
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Overall project status breakdown</p>
+        <Card variant="elevated" hover="glow">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-success to-chart-accent-2 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold">Project Status Distribution</CardTitle>
+                <p className="text-xs text-muted-foreground font-medium">Overall project status breakdown</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {projectsLoading ? (
@@ -422,13 +444,17 @@ export function Dashboard() {
       </div>
 
       {/* Recent Projects */}
-      <Card className="hover:shadow-lg transition-shadow duration-300">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-primary" />
-            Recent Project Updates
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">Latest activity from ongoing projects</p>
+      <Card variant="elevated" hover="glow">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-chart-accent-1 to-warning flex items-center justify-center">
+              <Briefcase className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-bold">Recent Project Updates</CardTitle>
+              <p className="text-xs text-muted-foreground font-medium">Latest activity from ongoing projects</p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {projectsLoading ? (
@@ -445,29 +471,41 @@ export function Dashboard() {
                 recentProjects.map((project, index) => (
                   <div 
                     key={index} 
-                    className="group flex items-center justify-between p-4 border rounded-xl hover:border-primary/50 hover:shadow-md transition-all duration-300 bg-gradient-to-r hover:from-primary/5 hover:to-transparent"
+                    className="group relative overflow-hidden p-5 border border-border rounded-xl hover:border-primary/30 hover:shadow-xl transition-all duration-300 bg-card hover-lift"
                   >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className={`w-2 h-14 rounded-full ${getStatusColor(project.status)} shadow-sm`} />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                          {project.name}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">{project.ngo}</p>
-                      </div>
-                      <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1">
-                        {getThemeIcon(project.theme)}
-                        <span className="font-medium">{project.theme}</span>
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 ml-4">
-                      <div className="text-right min-w-[80px]">
-                        <div className="text-sm font-bold text-primary mb-1">{project.progress}%</div>
-                        <div className="w-20 bg-muted rounded-full h-2 overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-500"
-                            style={{ width: `${project.progress}%` }}
-                          />
+                    {/* Status Indicator */}
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${getStatusColor(project.status)}`} />
+                    
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors mb-1">
+                              {project.name}
+                            </h4>
+                            <p className="text-sm text-muted-foreground font-medium">{project.ngo}</p>
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-primary/5 to-transparent border-primary/20"
+                          >
+                            {getThemeIcon(project.theme)}
+                            <span className="font-semibold text-xs">{project.theme}</span>
+                          </Badge>
+                        </div>
+                        
+                        {/* Progress Section */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground font-medium">Progress</span>
+                            <span className="text-sm font-bold text-primary">{project.progress}%</span>
+                          </div>
+                          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-primary via-accent to-primary transition-all duration-700 ease-out"
+                              style={{ width: `${project.progress}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
