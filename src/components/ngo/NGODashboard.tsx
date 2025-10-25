@@ -81,18 +81,18 @@ export function NGODashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">NGO Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-4xl font-bold gradient-text">Quick Updates</h1>
+        <p className="text-muted-foreground mt-2">
           Manage your projects and submit quick updates to CMS Foundation
         </p>
       </div>
 
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card style={{ borderLeft:'5px solid #6F49F8' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -104,7 +104,7 @@ export function NGODashboard() {
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft:'5px solid #8ECE33FF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -116,7 +116,7 @@ export function NGODashboard() {
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft:'5px solid #FFB800' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -129,7 +129,7 @@ export function NGODashboard() {
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft:'5px solid #FF74DAFF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
