@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import dayjs from "dayjs";
 
@@ -92,24 +92,24 @@ export default function LivelihoodThematic() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Livelihood — Thematic Projects</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold gradient-text">Livelihood Projects</h1>
+          <p className="text-muted-foreground mt-2">
             Track skill development, SHG support, and rural entrepreneurship programs.
           </p>
         </div>
-        <Button onClick={() => navigate("/projects")}>
-          + Add Project
+        <Button onClick={() => navigate("/projects")} className="shadow-md hover-lift">
+          <Plus className="mr-2 h-4 w-4" /> Add Project
         </Button>
       </div>
 
       {/* Project Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => (
-          <Card key={p.id} className="hover:shadow-xl transition border rounded-2xl overflow-hidden">
+          <Card key={p.id} variant="elevated" hover="lift">
             <CardHeader className="pb-3 border-b">
               <div className="flex justify-between items-start">
                 <div>

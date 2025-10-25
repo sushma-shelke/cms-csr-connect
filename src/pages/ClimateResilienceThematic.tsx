@@ -101,14 +101,14 @@ export default function ClimateResilienceThematic() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Climate Resilience — Thematic Projects</h1>
-          <p className="text-muted-foreground">Track afforestation, water conservation, and climate adaptation programs.</p>
+          <h1 className="text-4xl font-bold gradient-text">Climate Resilience</h1>
+          <p className="text-muted-foreground mt-2">Track afforestation, water conservation, and climate adaptation programs.</p>
         </div>
-        <Button onClick={() => navigate("/projects")}>
+        <Button onClick={() => navigate("/projects")} className="shadow-md hover-lift">
           <Plus className="mr-2 h-4 w-4" /> New Climate Project
         </Button>
       </div>
@@ -116,7 +116,7 @@ export default function ClimateResilienceThematic() {
       {/* Project Cards */}
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
   {projects.map((p) => (
-    <Card key={p.id} className="hover:shadow-xl transition border rounded-2xl overflow-hidden">
+    <Card key={p.id} variant="elevated" hover="lift">
       <CardHeader className="pb-3 border-b">
         <div className="flex justify-between items-start">
           <div>

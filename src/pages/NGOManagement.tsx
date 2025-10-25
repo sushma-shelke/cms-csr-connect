@@ -422,17 +422,17 @@ export default function NGOManagement() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">NGO Partners</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold gradient-text">NGO Partners</h1>
+          <p className="text-muted-foreground mt-2">
             Manage your CSR implementation partners and track their performance
           </p>
         </div>
         <Link to="/add-ngo">
-          <Button className="bg-primary">
+          <Button className="shadow-md hover-lift">
             <Plus className="h-4 w-4 mr-2" />
             Add NGO
           </Button>
@@ -441,7 +441,7 @@ export default function NGOManagement() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card style={{ borderLeft: "5px solid #6F49F8" }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -453,7 +453,7 @@ export default function NGOManagement() {
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft: "5px solid #8ECE33FF" }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -467,7 +467,7 @@ export default function NGOManagement() {
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft: "5px solid #FFB800" }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -481,7 +481,7 @@ export default function NGOManagement() {
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft: "5px solid #FF74DAFF" }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -497,7 +497,7 @@ export default function NGOManagement() {
       </div>
 
       {/* Search and Table */}
-      <Card>
+      <Card variant="elevated" hover="glow">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Partner Organizations</CardTitle>

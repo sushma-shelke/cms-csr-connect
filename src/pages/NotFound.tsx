@@ -16,7 +16,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md mx-auto">
+      <Card variant="elevated" hover="lift" className="w-full max-w-md mx-auto animate-in">
         <CardContent className="flex flex-col items-center text-center p-8 space-y-6">
           <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center">
             <AlertTriangle className="w-10 h-10 text-destructive" />

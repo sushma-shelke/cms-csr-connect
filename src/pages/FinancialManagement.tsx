@@ -74,18 +74,18 @@ export default function FinancialManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Financial Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold gradient-text">Financial Management</h1>
+          <p className="text-muted-foreground mt-2">
             Budget allocation, tracking and expenditure management
           </p>
         </div>
         {isAdmin && (
           <Dialog>
   <DialogTrigger asChild>
-    <Button className="bg-primary">
+    <Button className="shadow-md hover-lift">
       <Plus className="h-4 w-4 mr-2" /> Add Financial Record
     </Button>
   </DialogTrigger>
@@ -177,7 +177,7 @@ export default function FinancialManagement() {
 
       {/* Financial Overview Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card style={{ borderLeft: '4px solid #6F49F8' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -189,7 +189,7 @@ export default function FinancialManagement() {
           </CardContent>
         </Card>
         
-        <Card style={{ borderLeft: '4px solid #8ECE33FF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -201,7 +201,7 @@ export default function FinancialManagement() {
           </CardContent>
         </Card>
         
-        <Card style={{ borderLeft: '4px solid #FFB74BFF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -213,7 +213,7 @@ export default function FinancialManagement() {
           </CardContent>
         </Card>
         
-        <Card style={{ borderLeft: '4px solid #FF74DAFF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -227,7 +227,7 @@ export default function FinancialManagement() {
       </div>
 
       {/* Budget Utilization Progress */}
-      <Card>
+      <Card variant="elevated" hover="glow">
         <CardContent className="p-6">
           <div className="space-y-4">
             <div className="flex justify-between items-center">

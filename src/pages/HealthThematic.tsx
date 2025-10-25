@@ -146,16 +146,16 @@ export default function HealthThematic() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Health — Thematic Projects</h1>
-          <p className="text-muted-foreground">Detailed form for health projects with KPIs and budget breakdown.</p>
+          <h1 className="text-4xl font-bold gradient-text">Health Projects</h1>
+          <p className="text-muted-foreground mt-2">Detailed form for health projects with KPIs and budget breakdown.</p>
         </div>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="shadow-md hover-lift">
               <Plus className="mr-2 h-4 w-4" /> New Health Project
             </Button>
           </DialogTrigger>
@@ -246,7 +246,7 @@ export default function HealthThematic() {
       {/* Project Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((p) => (
-          <Card key={p.id} className="hover:shadow-lg transition border rounded-xl">
+          <Card key={p.id} variant="elevated" hover="lift">
             <CardHeader className="flex justify-between items-start pb-2">
               <div>
                 <CardTitle className="text-lg">{p.projectName}</CardTitle>
