@@ -867,16 +867,16 @@ export default function ProjectManagement() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Project Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold gradient-text">Project Management</h1>
+          <p className="text-muted-foreground mt-2">
             Monitor and track CSR project execution and impact
           </p>
         </div>
         <Button
-          className="bg-primary hover:bg-primary/90"
+          className="shadow-md hover-lift"
           onClick={handleCreateNewProject}
           disabled={isLoading}
         >
@@ -886,67 +886,75 @@ export default function ProjectManagement() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card style={{ borderLeft:'5px solid #6F49F8' }}>
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">
                   Total Projects
                 </p>
-                <p className="text-2xl font-bold">{projects.length}</p>
+                <p className="text-3xl font-bold text-foreground">{projects.length}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-primary" />
+              <div className="rounded-xl bg-primary/10 p-3">
+                <TrendingUp className="h-8 w-8 text-primary" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft:'5px solid #8ECE33FF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">
                   Total Budget
                 </p>
-                <p className="text-2xl font-bold">
+                <p className="text-3xl font-bold text-foreground">
                   ₹{(totalBudget / 100000).toFixed(1)}L
                 </p>
               </div>
-              <IndianRupee className="h-8 w-8 text-success" color="#8ECE33FF" />
+              <div className="rounded-xl bg-success/10 p-3">
+                <IndianRupee className="h-8 w-8 text-success" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft:'5px solid #FFB800' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">
                   Budget Utilized
                 </p>
-                <p className="text-2xl font-bold">
+                <p className="text-3xl font-bold text-foreground">
                   {totalBudget > 0
                     ? ((totalSpent / totalBudget) * 100).toFixed(1)
                     : 0}%
                 </p>
               </div>
-              <CheckCircle2 className="h-8 w-8 " color="#FFB74BFF" />
+              <div className="rounded-xl bg-warning/10 p-3">
+                <CheckCircle2 className="h-8 w-8 text-warning" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card style={{ borderLeft:'5px solid #FF74DAFF' }}>
+        <Card variant="elevated" hover="lift">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-muted-foreground mb-1">
                   Beneficiaries
                 </p>
-                <p className="text-2xl font-bold">
+                <p className="text-3xl font-bold text-foreground">
                   {totalBeneficiaries.toLocaleString()}
                 </p>
               </div>
-              <Users className="h-8 w-8 " color="#FF74DAFF" />
+              <div className="rounded-xl bg-accent/10 p-3">
+                <Users className="h-8 w-8 text-accent" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -968,10 +976,10 @@ export default function ProjectManagement() {
 
         <TabsContent value="projects">
           {/* Filters + Search */}
-          <Card>
+          <Card variant="elevated" hover="glow">
             <CardHeader>
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <CardTitle>Active Projects</CardTitle>
+                <CardTitle className="text-2xl">Active Projects</CardTitle>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1115,9 +1123,9 @@ export default function ProjectManagement() {
 
         <TabsContent value="analytics">
           <div className="grid gap-6">
-            <Card>
+            <Card variant="elevated" hover="glow">
               <CardHeader>
-                <CardTitle>Project Analytics</CardTitle>
+                <CardTitle className="text-2xl">Project Analytics</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
