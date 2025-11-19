@@ -642,7 +642,16 @@ export default function ProjectManagement() {
     try {
       setIsLoading(true);
       const data = await getProjects();
-      setProjects(data);
+      
+      // ✅ FIXED: Filter out sub-projects from main project listing
+      const mainProjects = Array.isArray(data) 
+        ? data.filter((project: any) => 
+            project.projectType !== 'SUB_PROJECT' && 
+            !project.parentProjectId
+          )
+        : [];
+      
+      setProjects(mainProjects);
     } catch (err) {
       console.error("Failed to fetch projects:", err);
     } finally {
