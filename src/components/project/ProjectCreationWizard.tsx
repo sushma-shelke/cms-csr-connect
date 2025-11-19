@@ -1593,17 +1593,19 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
     // ✅ UPDATED: Match the desired payload format exactly
     const payload = {
-      projectType: projectData.theme, // Use theme or default
+      projectType: projectData.projectType === 'integrated_village_development' ? 'IVDP' : projectData.theme,
       projectHead: projectData.projectHead,
       projectName: projectData.name,
       projectTheme: projectData.theme,
+      ngoId: selectedNgoId, // ✅ Include NGO ID
+      projectNgoPartnerName: projectData.ngoPartner, // ✅ Include NGO Partner Name
       expectedBeneficiaries: projectData.beneficiaries,
       projectLocation: projectData.location,
       projectStartDate: startDate ? format(startDate, "yyyy-MM-dd") : null,
       projectEndDate: endDate ? format(endDate, "yyyy-MM-dd") : null,
       projectDescription: projectData.description,
       projectObjectives: projectData.objectives,
-      projectdpr: projectDprValue,
+      projectdpr: projectDprValue, // ✅ Include DPR field
       projectStatus: "Planned",
       
       // Budget section - simplified to match desired format
@@ -1631,15 +1633,9 @@ const handleSubmit = async (e?: React.FormEvent) => {
       // Budget allocation items with embedded monthly targets
       budgetAllocationItems: budgetAllocationItems,
 
-      // Remove these fields that are not in desired format:
-      // - ngoId
-      // - projectNgoPartnerName  
-      // - projectManagerId
-      // - monthlyTargetItems (separate array)
-      // - subProjects (if not IVDP)
-
-      // Only include subProjects for IVDP type
-      ...(projectData.projectType === 'integrated_village_development' && {
+      // ✅ FIXED: For IVDP projects, include parentProjectId instead of creating separate projects
+      // For sub-projects created under IVDP, they should reference the parent project
+      ...(projectData.projectType === 'integrated_village_development' && subProjects.length > 0 && {
         subProjects: subProjects.map((sub, index) => ({
           id: sub.id,
           name: sub.name,
@@ -1647,7 +1643,9 @@ const handleSubmit = async (e?: React.FormEvent) => {
           budget: sub.budget,
           startDate: sub.startDate ? format(sub.startDate, "yyyy-MM-dd") : null,
           endDate: sub.endDate ? format(sub.endDate, "yyyy-MM-dd") : null,
-          orderIndex: index
+          orderIndex: index,
+          projectType: 'SUB_PROJECT', // ✅ Mark as sub-project
+          ngoId: selectedNgoId, // ✅ Inherit NGO from parent
         }))
       })
     };

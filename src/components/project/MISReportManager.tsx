@@ -290,7 +290,15 @@ export function MISReportManager() {
       const response = await api.get("/api/projects");
       console.log(response.data, "GET");
       
-      setProjects(Array.isArray(response.data) ? response.data : []);
+      // ✅ FIXED: Filter out sub-projects from main project listing
+      const mainProjects = Array.isArray(response.data) 
+        ? response.data.filter((project: any) => 
+            project.projectType !== 'SUB_PROJECT' && 
+            !project.parentProjectId
+          )
+        : [];
+      
+      setProjects(mainProjects);
     } catch (err) {
       console.error('Error fetching projects:', err);
       setError('Failed to load projects. Please try again.');
