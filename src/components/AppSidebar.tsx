@@ -12,7 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import cmsLogo from "@/assets/cms-logo.webp";
+import cmsLogo from "@/assets/cms-logo-1.png";
 import { cn } from "@/lib/utils";
 
 import {
@@ -66,11 +66,11 @@ export function AppSidebar() {
         {/* Modern Logo Header */}
         <div className="p-6 border-b border-sidebar-border/50">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl  from-primary to-accent flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
               <img 
                 src={cmsLogo} 
                 alt="CMS Foundation" 
-                className="w-12 h-12 object-contain"
+                className="w-8 h-8 object-contain brightness-0 invert"
               />
             </div>
             {!isCollapsed && (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,17 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import {  Clock,  Plus, X, Upload, FileText } from "lucide-react";
+import { Calendar, Clock, Target, TrendingUp, Plus, X, Upload, FileText } from "lucide-react";
+import { Star } from "lucide-react";
 import api from "../../api/axios";
-
-interface Project {
-  id: number;
-  projectName: string;
-  projectType: string;
-  projectHead: string;
-  projectTheme: string;
-  projectStatus: string;
-}
 
 interface QuickUpdateFormData {
   projectId: string;
@@ -27,16 +19,15 @@ interface QuickUpdateFormData {
   challenges: string;
   nextSteps: string;
   mediaCount: number;
-  // testimonial: string;
-  // caseStudies: string[];
-  // eventReport: string;
+  testimonial: string;
+  caseStudies: string[];
+  eventReport: string;
 }
 
-// Updated interface to match expected format
 interface MediaFiles {
-  imageUrl?: string;
-  videoUrl?: string;
-  documentUrl?: string;
+  images: string[];
+  videos: string[];
+  documents: string[];
 }
 
 interface UploadedFile {
@@ -57,13 +48,11 @@ export function QuickUpdateForm() {
     challenges: "",
     nextSteps: "",
     mediaCount: 0,
-    // testimonial: "",
-    // caseStudies: [""],
-    // eventReport: "",
+    testimonial: "",
+    caseStudies: [""],
+    eventReport: "",
   });
   
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -78,37 +67,13 @@ export function QuickUpdateForm() {
     "Testimonial",
   ];
 
-  // Fetch projects from API
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setIsLoadingProjects(true);
-        const response = await api.get('/api/projects');
-        
-        if (response.data && Array.isArray(response.data)) {
-          setProjects(response.data);
-        } else {
-          console.error('Unexpected API response format:', response.data);
-          toast({
-            title: "Error",
-            description: "Failed to load projects. Unexpected response format.",
-            variant: "destructive",
-          });
-        }
-      } catch (error: any) {
-        console.error('Error fetching projects:', error);
-        toast({
-          title: "Error Loading Projects",
-          description: error.response?.data?.message || "Failed to load projects. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingProjects(false);
-      }
-    };
-
-    fetchProjects();
-  }, [toast]);
+  const projects = [
+    "Rural Health Initiative - Phase 1",
+    "Education Access Program",
+    "Clean Water Project",
+    "Livelihood Skills Training",
+    "Climate Resilience Project",
+  ];
 
   // Categorize files by type
   const getFileType = (file: File): 'image' | 'video' | 'document' => {
@@ -142,32 +107,32 @@ export function QuickUpdateForm() {
     setUploadedFiles(prev => [...prev, ...newFiles]);
   };
 
-  // Upload files to the server - UPDATED to return single URLs
+  // Upload files to the server
   const uploadFiles = async (): Promise<MediaFiles> => {
     if (uploadedFiles.length === 0) {
-      return {};
+      return { images: [], videos: [], documents: [] };
     }
 
     setIsUploading(true);
-    const mediaFiles: MediaFiles = {};
+    const mediaFiles: MediaFiles = {
+      images: [],
+      videos: [],
+      documents: []
+    };
 
     try {
-      // We'll take only the first file of each type (as per expected format)
-      const imageFiles = uploadedFiles.filter(file => file.type === 'image');
-      const videoFiles = uploadedFiles.filter(file => file.type === 'video');
-      const documentFiles = uploadedFiles.filter(file => file.type === 'document');
-
-      // Upload first image if exists
-      if (imageFiles.length > 0) {
-        const imageFile = imageFiles[0];
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const uploadedFile = uploadedFiles[i];
+        
+        // Update file status to uploading
         setUploadedFiles(prev => 
-          prev.map(file => 
-            file === imageFile ? { ...file, isUploading: true, uploadProgress: 0 } : file
+          prev.map((file, index) => 
+            index === i ? { ...file, isUploading: true, uploadProgress: 0 } : file
           )
         );
 
         const formData = new FormData();
-        formData.append('files', imageFile.file);
+        formData.append('files', uploadedFile.file);
 
         const response = await api.post('/upload/documents', formData, {
           headers: {
@@ -176,92 +141,37 @@ export function QuickUpdateForm() {
           onUploadProgress: (progressEvent) => {
             const progress = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
             setUploadedFiles(prev => 
-              prev.map(file => 
-                file === imageFile ? { ...file, uploadProgress: progress } : file
+              prev.map((file, index) => 
+                index === i ? { ...file, uploadProgress: progress } : file
               )
             );
           },
         });
 
-        if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
-          mediaFiles.imageUrl = response.data.uploadedUrls[0];
+        if (response.data.status === 200 && response.data.uploadedUrls) {
+          // Categorize the uploaded URLs
+          response.data.uploadedUrls.forEach((url: string) => {
+            switch (uploadedFile.type) {
+              case 'image':
+                mediaFiles.images.push(url);
+                break;
+              case 'video':
+                mediaFiles.videos.push(url);
+                break;
+              case 'document':
+                mediaFiles.documents.push(url);
+                break;
+            }
+          });
+          
+          // Update file status to completed
           setUploadedFiles(prev => 
-            prev.map(file => 
-              file === imageFile ? { ...file, isUploading: false, uploadProgress: 100 } : file
+            prev.map((file, index) => 
+              index === i ? { ...file, isUploading: false, uploadProgress: 100 } : file
             )
           );
-        }
-      }
-
-      // Upload first video if exists
-      if (videoFiles.length > 0) {
-        const videoFile = videoFiles[0];
-        setUploadedFiles(prev => 
-          prev.map(file => 
-            file === videoFile ? { ...file, isUploading: true, uploadProgress: 0 } : file
-          )
-        );
-
-        const formData = new FormData();
-        formData.append('files', videoFile.file);
-
-        const response = await api.post('/upload/documents', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            const progress = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
-            setUploadedFiles(prev => 
-              prev.map(file => 
-                file === videoFile ? { ...file, uploadProgress: progress } : file
-              )
-            );
-          },
-        });
-
-        if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
-          mediaFiles.videoUrl = response.data.uploadedUrls[0];
-          setUploadedFiles(prev => 
-            prev.map(file => 
-              file === videoFile ? { ...file, isUploading: false, uploadProgress: 100 } : file
-            )
-          );
-        }
-      }
-
-      // Upload first document if exists
-      if (documentFiles.length > 0) {
-        const documentFile = documentFiles[0];
-        setUploadedFiles(prev => 
-          prev.map(file => 
-            file === documentFile ? { ...file, isUploading: true, uploadProgress: 0 } : file
-          )
-        );
-
-        const formData = new FormData();
-        formData.append('files', documentFile.file);
-
-        const response = await api.post('/upload/documents', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            const progress = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
-            setUploadedFiles(prev => 
-              prev.map(file => 
-                file === documentFile ? { ...file, uploadProgress: progress } : file
-              )
-            );
-          },
-        });
-
-        if (response.data.status === 200 && response.data.uploadedUrls && response.data.uploadedUrls.length > 0) {
-          mediaFiles.documentUrl = response.data.uploadedUrls[0];
-          setUploadedFiles(prev => 
-            prev.map(file => 
-              file === documentFile ? { ...file, isUploading: false, uploadProgress: 100 } : file
-            )
-          );
+        } else {
+          throw new Error('Upload failed');
         }
       }
 
@@ -273,7 +183,7 @@ export function QuickUpdateForm() {
         description: "Some files failed to upload. Please try again.",
         variant: "destructive",
       });
-      return {};
+      return { images: [], videos: [], documents: [] };
     } finally {
       setIsUploading(false);
     }
@@ -287,10 +197,10 @@ export function QuickUpdateForm() {
       // First upload all files and get categorized URLs
       const mediaFiles = await uploadFiles();
       
-      // Calculate total media count based on which URLs we have
-      const totalMediaCount = Object.values(mediaFiles).filter(url => url !== undefined).length;
+      // Calculate total media count
+      const totalMediaCount = mediaFiles.images.length + mediaFiles.videos.length + mediaFiles.documents.length;
       
-      // Prepare payload according to expected API format
+      // Prepare payload according to API format
       const payload = {
         project: formData.projectId,
         updateType: formData.updateType,
@@ -300,13 +210,15 @@ export function QuickUpdateForm() {
         currentChallenges: formData.challenges || "",
         nextSteps: formData.nextSteps || "",
         mediaFilesCount: totalMediaCount,
-        mediaFiles: mediaFiles, // Now this matches the expected format
-        status: "Submitted", // Changed to match expected format
+        mediaFiles: mediaFiles,
+        // Add other required fields
+        status: "In Progress",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        // testimonial: formData.testimonial || "",
-        // caseStudies: formData.caseStudies.filter(study => study.trim() !== ""),
-        // eventReport: formData.eventReport || "",
+        // Include additional fields from your form if needed
+        testimonial: formData.testimonial || "",
+        caseStudies: formData.caseStudies.filter(study => study.trim() !== ""),
+        eventReport: formData.eventReport || "",
       };
 
       console.log("Final payload:", payload);
@@ -332,9 +244,9 @@ export function QuickUpdateForm() {
         challenges: "",
         nextSteps: "",
         mediaCount: 0,
-        // testimonial: "",
-        // caseStudies: [""],
-        // eventReport: "",
+        testimonial: "",
+        caseStudies: [""],
+        eventReport: "",
       });
       setUploadedFiles([]);
       
@@ -354,6 +266,26 @@ export function QuickUpdateForm() {
 
   const handleInputChange = (field: keyof QuickUpdateFormData, value: string | number | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCaseStudyChange = (index: number, value: string) => {
+    const updatedCaseStudies = [...formData.caseStudies];
+    updatedCaseStudies[index] = value;
+    setFormData(prev => ({ ...prev, caseStudies: updatedCaseStudies }));
+  };
+
+  const addCaseStudy = () => {
+    setFormData(prev => ({ 
+      ...prev, 
+      caseStudies: [...prev.caseStudies, ""] 
+    }));
+  };
+
+  const removeCaseStudy = (index: number) => {
+    if (formData.caseStudies.length > 1) {
+      const updatedCaseStudies = formData.caseStudies.filter((_, i) => i !== index);
+      setFormData(prev => ({ ...prev, caseStudies: updatedCaseStudies }));
+    }
   };
 
   const removeUploadedFile = (index: number) => {
@@ -393,40 +325,22 @@ export function QuickUpdateForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Project Selection */}
+          {/* Existing form fields remain the same */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="project">Project</Label>
-              <Select 
-                value={formData.projectId} 
-                onValueChange={(value) => handleInputChange("projectId", value)}
-                disabled={isLoadingProjects}
-              >
+              <Select value={formData.projectId} onValueChange={(value) => handleInputChange("projectId", value)}>
                 <SelectTrigger>
-                  <SelectValue 
-                    placeholder={
-                      isLoadingProjects 
-                        ? "Loading projects..." 
-                        : "Select project"
-                    } 
-                  />
+                  <SelectValue placeholder="Select project" />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.projectName}>
-                      {project.projectName}
+                  {projects.map((project, index) => (
+                    <SelectItem key={index} value={project}>
+                      {project}
                     </SelectItem>
                   ))}
-                  {projects.length === 0 && !isLoadingProjects && (
-                    <SelectItem value="no-projects" disabled>
-                      No projects available
-                    </SelectItem>
-                  )}
                 </SelectContent>
               </Select>
-              {isLoadingProjects && (
-                <p className="text-sm text-muted-foreground">Loading projects...</p>
-              )}
             </div>
 
             <div className="space-y-2">
@@ -446,7 +360,6 @@ export function QuickUpdateForm() {
             </div>
           </div>
 
-          {/* Rest of the form remains the same */}
           <div className="space-y-2">
             <Label htmlFor="title">Update Title</Label>
             <Input
@@ -511,6 +424,69 @@ export function QuickUpdateForm() {
               onChange={(e) => handleInputChange("nextSteps", e.target.value)}
               placeholder="Outline planned activities for the next period"
               rows={3}
+            />
+          </div>
+
+          {/* Testimonial Field */}
+          <div className="space-y-2">
+            <Label htmlFor="testimonial">Testimonial</Label>
+            <Textarea
+              id="testimonial"
+              value={formData.testimonial}
+              onChange={(e) => handleInputChange("testimonial", e.target.value)}
+              placeholder="Share a testimonial from beneficiaries or stakeholders"
+              rows={3}
+            />
+          </div>
+
+          {/* Case Studies Field */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Case Studies</Label>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="icon" 
+                onClick={addCaseStudy}
+                className="h-8 w-8 rounded-full"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {formData.caseStudies.map((caseStudy, index) => (
+              <div key={index} className="flex gap-2 items-start">
+                <Textarea
+                  value={caseStudy}
+                  onChange={(e) => handleCaseStudyChange(index, e.target.value)}
+                  placeholder={`Case study ${index + 1} - Describe a specific success story or impact example`}
+                  rows={3}
+                  className="flex-1"
+                />
+                {formData.caseStudies.length > 1 && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => removeCaseStudy(index)}
+                    className="h-10 w-10 rounded-full mt-0.5"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Event Report Field */}
+          <div className="space-y-2">
+            <Label htmlFor="eventReport">Event Report</Label>
+            <Textarea
+              id="eventReport"
+              value={formData.eventReport}
+              onChange={(e) => handleInputChange("eventReport", e.target.value)}
+              placeholder="Provide details about any events, workshops, or community gatherings"
+              rows={4}
             />
           </div>
 
@@ -600,7 +576,7 @@ export function QuickUpdateForm() {
           <div className="flex gap-3 pt-4">
             <Button 
               type="submit" 
-              disabled={isSubmitting || isUploading || !formData.projectId} 
+              disabled={isSubmitting || isUploading} 
               className="flex-1"
             >
               {isSubmitting || isUploading ? "Uploading and Submitting..." : "Submit Update"}

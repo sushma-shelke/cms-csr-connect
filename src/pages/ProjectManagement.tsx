@@ -1032,9 +1032,9 @@ export default function ProjectManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Project</TableHead>
-                      {/* <TableHead>NGO Partner</TableHead> */}
+                      <TableHead>NGO Partner</TableHead>
                       <TableHead>Theme</TableHead>
-                      {/* <TableHead>Status</TableHead> */}
+                      <TableHead>Status</TableHead>
                       <TableHead>Timeline</TableHead>
                       <TableHead>Budget</TableHead>
                       <TableHead>Actions</TableHead>
@@ -1054,9 +1054,9 @@ export default function ProjectManagement() {
                             </p>
                           </div>
                         </TableCell>
-                        {/* <TableCell>
+                        <TableCell>
                           <p className="font-medium">{project.projectNgoPartner}</p>
-                        </TableCell> */}
+                        </TableCell>
                         <TableCell>
                           <span
                             className={`font-medium ${getThemeColor(
@@ -1066,14 +1066,14 @@ export default function ProjectManagement() {
                             {project.projectTheme}
                           </span>
                         </TableCell>
-                        {/* <TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             {getStatusIcon(project.projectStatus)}
                             <Badge className={getStatusColor(project.projectStatus)}>
                               {getStatusText(project.projectStatus)}
                             </Badge>
                           </div>
-                        </TableCell> */}
+                        </TableCell>
                         <TableCell>
                           <div className="text-sm">
                             <div className="flex items-center gap-1">
