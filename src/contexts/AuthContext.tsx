@@ -359,14 +359,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
         return true;
       }
-      
-      setIsLoading(false);
-      return false;
     } catch (error) {
-      console.error('Login error:', error);
-      setIsLoading(false);
-      return false;
+      console.error('Backend login failed, trying dummy credentials:', error);
     }
+    
+    // Fallback to dummy credentials
+    const foundUser = dummyUsers.find(u => u.email === email && u.password === password);
+    
+    if (foundUser) {
+      const userSession: User = {
+        id: foundUser.id,
+        email: foundUser.email,
+        name: foundUser.name,
+        role: foundUser.role,
+        organization: foundUser.organization
+      };
+      
+      setUser(userSession);
+      localStorage.setItem('cms_user', JSON.stringify(userSession));
+      setIsLoading(false);
+      return true;
+    }
+    
+    setIsLoading(false);
+    return false;
   };
 
   const loginWithOtp = async (phoneNumber: string): Promise<boolean> => {
