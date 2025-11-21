@@ -33,6 +33,8 @@ const navigationItems = [
   { title: "Quick Updates", url: "/ngo-updates", icon: Clock },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "MIS Reports", url: "/mis-reports", icon: FileText },
+  { title: "User Activity", url: "/user-activity", icon: Users },
+
   // { title: "Financial Tracking", url: "/finance", icon: IndianRupee },
   // { title: "Media Evidence", url: "/media", icon: Camera },
 ];

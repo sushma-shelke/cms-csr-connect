@@ -21,6 +21,7 @@ import LivelihoodThematic from "./pages/LivelihoodThematic";
 import AddNGO from "./pages/AddNGO";
 import bgVideo from "./assets/bg.mp4";
 import { NGOCreationWizard } from "./components/ngo/NGOCreationWizard";
+import UserActivity from "./pages/UserActivity";
 
 
 const queryClient = new QueryClient();
@@ -70,6 +71,8 @@ const App = () => (
                 <Route path="/themes/education" element={<EducationThematic />} />
                 <Route path="/themes/climate" element={<ClimateResilienceThematic />} />
                 <Route path="/themes/livelihood" element={<LivelihoodThematic />} />
+                <Route path="/user-activity" element={<UserActivity />} />
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
