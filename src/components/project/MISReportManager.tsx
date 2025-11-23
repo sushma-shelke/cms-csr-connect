@@ -563,20 +563,33 @@ const prepareProjectUpdatePayload = () => {
     try {
       setLoading(true);
       const { startDate, endDate } = getCurrentMonthDateRange();
-      
-      const response = await api.get(`api/mis-reports/date-range`, {
+
+      const response = await api.get(`/api/mis-reports/date-range`, {
         params: {
           startDate,
           endDate
         }
       });
-      
+
+      console.log('MIS Reports API Response:', response.data);
+
       // Ensure reports is always an array, even if API returns null
       setReports(Array.isArray(response.data) ? response.data : []);
       setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching MIS reports:', err);
-      setError('Failed to load reports. Please try again.');
+
+      // Better error handling for different error types
+      if (err.response?.status === 400) {
+        console.error('Bad Request Error Details:', err.response.data);
+        setError('Invalid date range parameters. Please try again.');
+      } else if (err.response?.status === 500) {
+        console.error('Server Error Details:', err.response.data);
+        setError('Server error occurred. Please try again later.');
+      } else {
+        setError('Failed to load reports. Please try again.');
+      }
+
       setReports([]);
     } finally {
       setLoading(false);
