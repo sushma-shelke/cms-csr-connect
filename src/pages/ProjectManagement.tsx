@@ -642,7 +642,16 @@ export default function ProjectManagement() {
     try {
       setIsLoading(true);
       const data = await getProjects();
-      setProjects(data);
+      
+      // ✅ FIXED: Filter out sub-projects from main project listing
+      const mainProjects = Array.isArray(data) 
+        ? data.filter((project: any) => 
+            project.projectType !== 'SUB_PROJECT' && 
+            !project.parentProjectId
+          )
+        : [];
+      
+      setProjects(mainProjects);
     } catch (err) {
       console.error("Failed to fetch projects:", err);
     } finally {
@@ -1032,9 +1041,9 @@ export default function ProjectManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Project</TableHead>
-                      {/* <TableHead>NGO Partner</TableHead> */}
+                      <TableHead>NGO Partner</TableHead>
                       <TableHead>Theme</TableHead>
-                      {/* <TableHead>Status</TableHead> */}
+                      <TableHead>Status</TableHead>
                       <TableHead>Timeline</TableHead>
                       <TableHead>Budget</TableHead>
                       <TableHead>Actions</TableHead>
@@ -1054,9 +1063,9 @@ export default function ProjectManagement() {
                             </p>
                           </div>
                         </TableCell>
-                        {/* <TableCell>
+                        <TableCell>
                           <p className="font-medium">{project.projectNgoPartner}</p>
-                        </TableCell> */}
+                        </TableCell>
                         <TableCell>
                           <span
                             className={`font-medium ${getThemeColor(
@@ -1066,14 +1075,14 @@ export default function ProjectManagement() {
                             {project.projectTheme}
                           </span>
                         </TableCell>
-                        {/* <TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             {getStatusIcon(project.projectStatus)}
                             <Badge className={getStatusColor(project.projectStatus)}>
                               {getStatusText(project.projectStatus)}
                             </Badge>
                           </div>
-                        </TableCell> */}
+                        </TableCell>
                         <TableCell>
                           <div className="text-sm">
                             <div className="flex items-center gap-1">

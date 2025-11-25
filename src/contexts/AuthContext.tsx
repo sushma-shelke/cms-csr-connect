@@ -332,13 +332,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('https://mumbailocal.org:8089/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.token) {
+        localStorage.setItem('token', data.token);
+        
+        const userSession: User = {
+          id: data.user?.id || '1',
+          email: data.user?.email || email,
+          name: data.user?.name || data.user?.username || 'User',
+          role: data.user?.role || 'admin',
+          organization: data.user?.organization || 'CMS Foundation'
+        };
+        
+        setUser(userSession);
+        localStorage.setItem('cms_user', JSON.stringify(userSession));
+        setIsLoading(false);
+        return true;
+      }
+    } catch (error) {
+      console.error('Backend login failed, trying dummy credentials:', error);
+    }
     
+    // Fallback to dummy credentials
     const foundUser = dummyUsers.find(u => u.email === email && u.password === password);
     
     if (foundUser) {
-      const userSession = {
+      const userSession: User = {
         id: foundUser.id,
         email: foundUser.email,
         name: foundUser.name,
@@ -360,19 +389,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     
     try {
-      // Create user session with phone number
-      const userSession: User = {
-        id: phoneNumber,
-        email: `${phoneNumber}@mobile.user`,
-        name: `User ${phoneNumber.slice(-4)}`,
-        role: 'admin',
-        organization: 'CMS Foundation'
-      };
+      const jwtToken = localStorage.getItem('jwtToken');
+      if (!jwtToken) {
+        console.error('No JWT token found');
+        setIsLoading(false);
+        return false;
+      }
+
+      // Validate token to get user data
+      const response = await fetch('https://mumbailocal.org:8089/api/auth/validate-token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${jwtToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        localStorage.setItem('token', jwtToken);
+        
+        const userSession: User = {
+          id: data.userId || phoneNumber,
+          email: data.email || `${phoneNumber}@mobile.user`,
+          name: data.username || `User ${phoneNumber.slice(-4)}`,
+          role: data.role || 'admin',
+          organization: data.organization || 'CMS Foundation'
+        };
+        
+        setUser(userSession);
+        localStorage.setItem('cms_user', JSON.stringify(userSession));
+        setIsLoading(false);
+        return true;
+      }
       
-      setUser(userSession);
-      localStorage.setItem('cms_user', JSON.stringify(userSession));
       setIsLoading(false);
-      return true;
+      return false;
     } catch (error) {
       console.error('Error creating OTP session:', error);
       setIsLoading(false);
