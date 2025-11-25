@@ -244,9 +244,11 @@ export function QuickUpdateForm() {
         challenges: "",
         nextSteps: "",
         mediaCount: 0,
-        testimonial: "",
-        caseStudies: [""],
-        eventReport: "",
+
+        // testimonial: "",
+        // caseStudies: [""],
+        // eventReport: "", 
+
       });
       setUploadedFiles([]);
       
