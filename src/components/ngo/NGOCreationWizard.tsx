@@ -143,12 +143,12 @@ const ngoSteps = [
   {
     label: "Monitoring & Evaluation",
     fields: [
-      { name: "monWithinScheduleVII", label: "Within Schedule VII of Companies Act 2013?", type: "yesNo" },
-      { name: "monitoringMethods", label: "Well Defined Monitoring Methods?", type: "yesNo" },
-      { name: "monitoringResponsibility", label: "Any Individual for Monitoring & Mid-term Corrections?", type: "yesNo" },
-      { name: "externalEvaluation", label: "Any External/Third Party Evaluation?", type: "yesNo" },
-      { name: "accreditation", label: "Accreditation/Credibility Assurance?", type: "yesNo" },
-      { name: "networkMembership", label: "Part of Local/Professional Network?", type: "yesNo" }
+      // { name: "monWithinScheduleVII", label: "Within Schedule VII of Companies Act 2013?", type: "yesNo" },
+      // { name: "monitoringMethods", label: "Well Defined Monitoring Methods?", type: "yesNo" },
+      // { name: "monitoringResponsibility", label: "Any Individual for Monitoring & Mid-term Corrections?", type: "yesNo" },
+      { name: "externalEvaluation", label: "Any External/Third Party Evaluation?", type: "yesNoDocument" },
+      // { name: "accreditation", label: "Accreditation/Credibility Assurance?", type: "yesNo" },
+      // { name: "networkMembership", label: "Part of Local/Professional Network?", type: "yesNo" }
     ]
   }
 ];
