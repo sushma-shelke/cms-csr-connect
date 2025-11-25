@@ -334,7 +334,7 @@ export function QuickUpdateForm() {
         mediaCount: 0,
         // testimonial: "",
         // caseStudies: [""],
-        // eventReport: "",
+        // eventReport: "", 
       });
       setUploadedFiles([]);
       
